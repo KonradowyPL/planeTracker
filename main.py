@@ -1,12 +1,22 @@
 #!/usr/bin/python3
 
 import requests
+from dotenv import load_dotenv
 import time
+import os
+import json
+from datetime import datetime
 
+load_dotenv()
+
+webhookUrl = os.environ["WEBHOOK"]
 regs = ["HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG"]
 url = "https://api.airplanes.live/v2/reg/"
 activeFlights = {}
 
+
+def sendWebhook(message):
+    requests.post(webhookUrl, json={"content": message})
 
 
 def getData():
@@ -15,21 +25,21 @@ def getData():
         if response.status_code != 200:
             raise (response.status_code, response.text())
     except:  # noqa: E722
-        return {}    
+        return {}
     finally:
         return response.json()
 
 
 def launchEvent(hex):
-    print("launch:", hex, activeFlights[hex])
+    sendWebhook("launch: " + json.dumps(activeFlights[hex]))
 
 
 def landEvent(hex):
-    print("land:", hex, activeFlights[hex])
+    sendWebhook("land: "+ json.dumps(activeFlights[hex]))
 
 
 def run():
-    print("checking...", end="")
+    print(datetime.now().strftime("%H:%M:%S"),"checking...", end="")
     data = getData()
     if "ac" not in data:
         return print("   Error!")
@@ -56,6 +66,7 @@ def main():
     while True:
         run()
         time.sleep(60)
+
 
 if __name__ == "__main__":
     main()
