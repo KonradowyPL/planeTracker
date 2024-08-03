@@ -1,0 +1,31 @@
+{
+  "content": "-# 🛬 5 Lądowań\n-# 🛫 3 Startów",
+  "tts": false,
+  "embeds": [
+    {
+      "description": "**Regional Air Services**\nPIPER PA-31-300/310/325/350/425 ",
+      "fields": [
+        {
+          "name": "✈️ Śledź:",
+          "value": "[Flightradar]()\n[Airplanes.live]() ",
+          "inline": true
+        },
+        {
+          "name": "📍 Pozycja:",
+          "value": "1231.23, 123.321\n[OSM]()",
+          "inline": true
+        }
+      ],
+      "title": "🛬 Lądowanie: SP-FPK",
+      "thumbnail": {
+        "url": "https://cdn.jetphotos.com/400/5/635428_1688464149.jpg"
+      },
+      "url": "https://google.com",
+      "color": 16711680,
+      "timestamp": "2024-08-06T22:00:00.000Z"
+    }
+  ],
+  "components": [],
+  "actions": {},
+  "username": "Plane Spotter"
+}
