@@ -13,6 +13,7 @@ def getImage(reg) -> str:
     # check if in img cache
     if reg in data:
         return data[reg]
+        
 
     try:
         res = requests.get(
@@ -32,7 +33,7 @@ def getImage(reg) -> str:
         )
         if res.status_code != 200:
             print("Error finding image!")
-            return ""
+            return "https://www.jetphotos.com/assets/img/placeholders/medium.jpg"
 
         html_soup = BeautifulSoup(res.text, "html.parser")
         image = html_soup.find('img', class_='result__photo')
@@ -42,8 +43,4 @@ def getImage(reg) -> str:
         return url
     except Exception as error: 
         print("Error finding image!", error)
-        return ""
-        
-
-
-print(getImage("SP-FPK"))
+        return "https://www.jetphotos.com/assets/img/placeholders/medium.jpg"
