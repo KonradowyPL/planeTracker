@@ -41,23 +41,29 @@ def landPlane(flight):
 
 
 def generateEmbed(event, flight):
+    # print(json.dumps(flight))
     embeds.append(
         {
-            "title": f"{event}: {flight.get('r')}",
-            "description": f"{b('**{}**', flight.get('desc'))}{b(newLine + '{}', flight.get('ownOp'))}{b(newLine + '{}', flight.get('flight'))}",
+            "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
+            "description": f"{b('**{}**', flight.get('identification',{}).get('callsign'))}{b(newLine + '{}', flight.get('identification',{}).get('number', {}).get('default'))}{b(newLine + '{}', flight.get('flight'))}",
             "fields": [
                 {
+                    "name": "🛩️ Samolot:",
+                    "value": b("{}", flight.get("aircraft", {}).get("model", {}).get("text", "??")),
+                    "inline": True,
+                },
+                {
                     "name": "✈️ Śledź:",
-                    "value": "~~[Flightradar](https://google.com)~~\n~~[Airplanes.live](https://google.com)~~",
+                    "value": f"[Flightradar](https://www.flightradar24.com/{flight.get('identification', {}).get('callsign')}/{flight.get('identification', {}).get('id')})",
                     "inline": True,
                 },
                 {
                     "name": "📍 Pozycja:",
-                    "value": f"{flight.get('rr_lat','??')}, {flight.get('rr_lon', '??')}\n[OSM](https://osm.org/?mlat={flight.get('rr_lat','0')}&mlon={flight.get('rr_lon','0')})",
+                    "value": f"{flight.get('trail',[])[-1].get('lat', '??')}, {flight.get('trail',[])[-1].get('lng', '??')}\n[OSM](https://osm.org/?mlat={flight.get('trail',[])[-1].get('lat', '0')}&mlon={flight.get('trail',[])[-1].get('lng', '0')})",
                     "inline": True,
                 },
             ],
-            "thumbnail": {"url": getImage(flight.get("r", ""))},
+            "thumbnail": {"url": flight.get('aircraft', {}).get('images', {}).get('large', {})[0].get('src', "https://www.jetphotos.com/assets/img/placeholders/large.jpg")},
             "url": f'https://www.flightradar24.com/data/aircraft/{flight.get("r")}',
             "color": 16711680,
             "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z",

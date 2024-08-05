@@ -1,64 +1,58 @@
-import requests
-import time
-from datetime import datetime
 import webhook
+from FlightRadar24 import FlightRadar24API
 
 
+fr_api = FlightRadar24API()
 
-regs = ["HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG"]
-url = "https://api.airplanes.live/v2/reg/"
+regs = {"HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG", "N425AN"}
 activeFlights = {}
 
 
 def getData():
     try:
-        response = requests.get(url + ",".join(regs))
-        if response.status_code != 200:
-            raise (response.status_code, response.text())
-    except:  # noqa: E722
-        return {}
+        thisFlights = []
+        flights = fr_api.get_flights()
+        for flight in flights:
+            if flight.registration in regs:
+                thisFlights.append(flight)
+    except Exception as error: 
+        print("Error getting flights: ", error)
+        return []
     finally:
-        return response.json()
+        return thisFlights
 
 def sendWebhook():
     webhook.sendMessage()
 
 def launchEvent(hex):
-    webhook.launchPlane(activeFlights[hex])
+    webhook.launchPlane(fr_api.get_flight_details(activeFlights[hex]))
 
 def landEvent(hex):
-    webhook.landPlane(activeFlights[hex])
+    webhook.landPlane(fr_api.get_flight_details(activeFlights[hex]))
 
 
 def run():
-    print(datetime.now().strftime("%H:%M:%S"),"checking...", end="")
-    data = getData()
-    if "ac" not in data:
-        return print("   Error!")
-    print("   Done!")
-
+    flights = getData()
     newActive = {}
 
-    for flight in data["ac"]:
-        hex = flight["hex"]
-        newActive[hex] = flight
-        if hex not in activeFlights:
-            activeFlights[hex] = flight
-            launchEvent(hex)
+    for flight in flights:
+        newActive[flight.id] = flight
+        if flight.id not in activeFlights:
+            activeFlights[flight.id] = flight
+            launchEvent(flight.id)
 
-    for hex in list(activeFlights):
-        if hex not in newActive:
-            landEvent(hex)
-            del activeFlights[hex]
+    for id in list(activeFlights):
+        if id not in newActive:
+            landEvent(id)
+            del activeFlights[id]
 
     activeFlights.update(newActive)
     sendWebhook()
 
-
 def main():
-    while True:
+    # while True:
         run()
-        time.sleep(60)
+        # time.sleep(60)
 
 
 if __name__ == "__main__":
