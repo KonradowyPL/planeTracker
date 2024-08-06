@@ -4,7 +4,7 @@ from FlightRadar24 import FlightRadar24API
 
 fr_api = FlightRadar24API()
 
-regs = {"HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG", "N425AN"}
+regs = {"HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG", "PH-BVW"}
 activeFlights = {}
 
 
@@ -32,6 +32,7 @@ def landEvent(hex):
 
 
 def run():
+    print("checking...")
     flights = getData()
     newActive = {}
 
@@ -48,6 +49,7 @@ def run():
 
     activeFlights.update(newActive)
     sendWebhook()
+    print("done!")
 
 def main():
     # while True:
