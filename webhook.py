@@ -3,6 +3,8 @@ import os
 import json
 from dotenv import load_dotenv
 from datetime import datetime, timezone
+from gpstrace import makeTrace
+import base64
 
 load_dotenv()
 
@@ -10,6 +12,7 @@ webhookUrl = os.environ["WEBHOOK"]
 launches = 0
 landings = 0
 embeds = []
+buffer = None
 
 newLine = "\n"  # python does not allow '\' char within f strings
 
@@ -40,6 +43,9 @@ def landPlane(flight):
 
 
 def generateEmbed(event, flight):
+    print("making embed", flight.get("aircraft", {}).get("registration"))
+    global buffer
+    buffer = makeTrace(flight.get("trail", []))
     embeds.append(
         {
             "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
@@ -98,15 +104,27 @@ def sendMessage():
     if len(embeds) == 0:
         return
 
-    requests.post(
+    files = {"file": ("image.png", buffer, "image/png")}
+    data = {
+        # "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
+        "content": "help",
+        "tts": False,
+        "username": "Plane Spotter",
+        # "embeds": embeds,
+        "embeds": [{}],
+    }
+
+    payload_json = {"payload_json": json.dumps(data)}
+    multipart_data = {**payload_json, **files}
+
+    response = requests.post(
         webhookUrl,
-        json={
-            "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
-            "tts": False,
-            "username": "Plane Spotter",
-            "embeds": embeds,
-        },
+        files=multipart_data,
+        # headers= {
+        #     "Content-Type":"multipart/form-data"
+        # }
     )
+    print(response.status_code, response.text)
     embeds = []
     launches = 0
     landings = 0

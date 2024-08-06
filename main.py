@@ -1,10 +1,11 @@
 import webhook
 from FlightRadar24 import FlightRadar24API
-
+import time     
+import base64
 
 fr_api = FlightRadar24API()
 
-regs = {"HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG", "PH-BVW"}
+regs = {"HB-LUN", "HB-LUZ", "SP-PRO", "SP-GIS", "SP-FPK", "SP-OPK", "SP-ISS", "SP-OPG","A6-BLZ"}
 activeFlights = {}
 
 
@@ -52,9 +53,9 @@ def run():
     print("done!")
 
 def main():
-    # while True:
+    while True:
         run()
-        # time.sleep(60)
+        time.sleep(60)
 
 
 if __name__ == "__main__":
