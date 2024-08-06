@@ -105,24 +105,18 @@ def sendMessage():
         return
 
     files = {"file": ("image.png", buffer, "image/png")}
-    data = {
-        # "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
-        "content": "help",
+
+    payload_json = json.dumps({
+        "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
         "tts": False,
         "username": "Plane Spotter",
-        # "embeds": embeds,
-        "embeds": [{}],
-    }
-
-    payload_json = {"payload_json": json.dumps(data)}
-    multipart_data = {**payload_json, **files}
+        "embeds": embeds,
+    })
 
     response = requests.post(
         webhookUrl,
-        files=multipart_data,
-        # headers= {
-        #     "Content-Type":"multipart/form-data"
-        # }
+        files=files,
+        data={'payload_json': payload_json}
     )
     print(response.status_code, response.text)
     embeds = []
