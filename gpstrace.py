@@ -5,7 +5,7 @@ from io import BytesIO
 
 def makeTrace(points):
     coordinates = [(point['lat'],point['lng']) for point in points] 
-    m = StaticMap(512, 512, 32, 32) 
+    m = StaticMap(1024, 512, 32, 32) 
 
     line = Line(coordinates, 'green', 3) 
     m.add_line(line)

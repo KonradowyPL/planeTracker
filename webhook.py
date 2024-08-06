@@ -4,7 +4,6 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from gpstrace import makeTrace
-import base64
 
 load_dotenv()
 
@@ -12,9 +11,7 @@ webhookUrl = os.environ["WEBHOOK"]
 launches = 0
 landings = 0
 embeds = []
-buffer = None
-
-newLine = "\n"  # python does not allow '\' char within f strings
+files = {}
 
 
 # if replace returns formatted string
@@ -44,8 +41,9 @@ def landPlane(flight):
 
 def generateEmbed(event, flight):
     print("making embed", flight.get("aircraft", {}).get("registration"))
-    global buffer
-    buffer = makeTrace(flight.get("trail", []))
+    imgId = str(len(files))
+    files[imgId] = (f"{imgId}.png", makeTrace(flight.get("trail", [])), "image/png")
+
     embeds.append(
         {
             "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
@@ -59,8 +57,8 @@ def generateEmbed(event, flight):
                     "inline": True,
                 },
                 {
-                    "name": "Callsign:",
-                    "value": flight.get("identification", {}).get("callsign", "??"),
+                    "name": "✈️ Operator",
+                    "value": flight.get("airline", {}).get("name", "??"),
                     "inline": True,
                 },
                 {
@@ -71,14 +69,33 @@ def generateEmbed(event, flight):
                     "inline": True,
                 },
                 {
-                    "name": "✈️ Operator",
-                    "value": flight.get("airline", {}).get("name", "??"),
+                    "name": "Callsign:",
+                    "value": flight.get("identification", {}).get("callsign", "??"),
                     "inline": True,
                 },
                 {
-                    "name": "📍 Pozycja:",
-                    "value": f"[{flight.get('trail',[])[0].get('lat', '??')}, {flight.get('trail',[])[0].get('lng', '??')}](https://osm.org/?mlat={flight.get('trail',[])[0].get('lat', '0')}&mlon={flight.get('trail',[])[0].get('lng', '0')})",
+                    "name": "📍 Position:",
+                    "value": f"[{round(flight.get('trail',[])[0].get('lat', '??'),2)}, {round(flight.get('trail',[])[0].get('lng', '??'),2)}](https://osm.org/?mlat={flight.get('trail',[])[0].get('lat', '0')}&mlon={flight.get('trail',[])[0].get('lng', '0')})",
                     "inline": True,
+                },
+                {
+                    "name": "Altitude:",
+                    "value": f"{round(flight.get('trail',[])[0].get('alt', 0) * 0.3048)}m",
+                    "inline": True,
+                },
+                {
+                    "name": "✈️ From",
+                    "value": flight.get("airport", {})
+                    .get("origin", {})
+                    .get("name", "N/A"),
+                    "inline": False,
+                },
+                {
+                    "name": "✈️ To",
+                    "value": flight.get("airport", {})
+                    .get("destination", {})
+                    .get("name", "N/A"),
+                    "inline": False,
                 },
             ],
             "thumbnail": {
@@ -93,6 +110,7 @@ def generateEmbed(event, flight):
             "color": 16711680,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
             + "Z",
+            "image": {"url": f"attachment://{imgId}.png"},
         }
     )
 
@@ -104,21 +122,18 @@ def sendMessage():
     if len(embeds) == 0:
         return
 
-    files = {"file": ("image.png", buffer, "image/png")}
-
-    payload_json = json.dumps({
-        "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
-        "tts": False,
-        "username": "Plane Spotter",
-        "embeds": embeds,
-    })
+    payload_json = json.dumps(
+        {
+            "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
+            "tts": False,
+            "username": "Plane Spotter",
+            "embeds": embeds,
+        }
+    )
 
     response = requests.post(
-        webhookUrl,
-        files=files,
-        data={'payload_json': payload_json}
+        webhookUrl, files=files, data={"payload_json": payload_json}
     )
-    print(response.status_code, response.text)
     embeds = []
     launches = 0
     landings = 0
