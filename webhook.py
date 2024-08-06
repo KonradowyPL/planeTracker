@@ -43,7 +43,7 @@ def generateEmbed(event, flight):
     embeds.append(
         {
             "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
-            "description": "",
+            "description": flight.get("status", {}).get("text", ""),
             "fields": [
                 {
                     "name": "🛩️ Model:",
