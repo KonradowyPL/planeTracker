@@ -1,14 +1,14 @@
 import requests
 import os
 import json
-from dotenv import load_dotenv
 from datetime import datetime, timezone
 from gpstrace import makeTrace
 import sys
 
-load_dotenv()
 
-webhookUrl = os.environ["WEBHOOK"]
+config = json.load(open("config.json", "r"))
+
+webhookUrl = config["webhook"]
 launches = 0
 landings = 0
 embeds = []
@@ -151,10 +151,11 @@ def sendMessage():
 
     payload_json = json.dumps(
         {
-            "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
+            "content": f'{b("🛬 {} Landings", landings)}\n{b("🛫 {} Launches", launches)}',
             "tts": False,
-            "username": "Plane Spotter",
+            "username": config.get("name"),
             "embeds": embeds,
+            "icon": config.get("icon"),
         }
     )
 
@@ -162,7 +163,7 @@ def sendMessage():
         webhookUrl, files=files, data={"payload_json": payload_json}
     )
     if response.status_code != 200:
-        print("\n",response.text)
+        print("\n", response.text)
     embeds = []
     files = {}
     launches = 0

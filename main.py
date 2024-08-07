@@ -3,6 +3,9 @@ from FlightRadar24 import FlightRadar24API, FlightTrackerConfig
 import time
 import sys
 from datetime import datetime, timezone
+import json
+
+config = json.load(open("config.json", "r"))
 
 fr_api = FlightRadar24API()
 fr_api.set_flight_tracker_config(
@@ -10,18 +13,8 @@ fr_api.set_flight_tracker_config(
 )
 
 
-bounds = "56.86,48.22,11.06,28.26"  # poland
-regs = {
-    "HB-LUN",
-    "HB-LUZ",
-    "SP-PRO",
-    "SP-GIS",
-    "SP-FPK",
-    "SP-OPK",
-    "SP-ISS",
-    "SP-OPG",
-    "OY-JZN",
-}
+bounds = config.get("bounds")
+regs = set(config["planes"])
 activeFlights = {}
 
 
@@ -103,7 +96,7 @@ def run():
 def main():
     while True:
         run()
-        time.sleep(60)
+        time.sleep(config.get("interval", 60))
 
 
 if __name__ == "__main__":
