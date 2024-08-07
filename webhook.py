@@ -1,9 +1,9 @@
 import requests
 import os
 import json
-from images import getImage
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone
+from gpstrace import makeTrace
 
 load_dotenv()
 
@@ -11,8 +11,7 @@ webhookUrl = os.environ["WEBHOOK"]
 launches = 0
 landings = 0
 embeds = []
-
-newLine = "\n"  # python does not allow '\' char within f strings
+files = {}
 
 
 # if replace returns formatted string
@@ -41,26 +40,77 @@ def landPlane(flight):
 
 
 def generateEmbed(event, flight):
+    print("making embed", flight.get("aircraft", {}).get("registration"))
+    imgId = str(len(files))
+    files[imgId] = (f"{imgId}.png", makeTrace(flight.get("trail", [{"lat":0,"lng":0}])), "image/png")
+
     embeds.append(
         {
-            "title": f"{event}: {flight.get('r')}",
-            "description": f"{b('**{}**', flight.get('desc'))}{b(newLine + '{}', flight.get('ownOp'))}{b(newLine + '{}', flight.get('flight'))}",
+            "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
+            "description": flight.get("status", {}).get("text", ""),
             "fields": [
                 {
-                    "name": "✈️ Śledź:",
-                    "value": "~~[Flightradar](https://google.com)~~\n~~[Airplanes.live](https://google.com)~~",
+                    "name": "🛩️ Model:",
+                    "value": flight.get("aircraft", {})
+                    .get("model", {})
+                    .get("text", "??"),
                     "inline": True,
                 },
                 {
-                    "name": "📍 Pozycja:",
-                    "value": f"{flight.get('rr_lat','??')}, {flight.get('rr_lon', '??')}\n[OSM](https://osm.org/?mlat={flight.get('rr_lat','0')}&mlon={flight.get('rr_lon','0')})",
+                    "name": "✈️ Operator",
+                    "value": flight.get("airline", {}).get("name", "??"),
                     "inline": True,
                 },
+                {
+                    "name": "ID:",
+                    "value": flight.get("identification", {})
+                    .get("number", {})
+                    .get("default", "??"),
+                    "inline": True,
+                },
+                {
+                    "name": "Callsign:",
+                    "value": flight.get("identification", {}).get("callsign", "??"),
+                    "inline": True,
+                },
+                {
+                    "name": "📍 Position:",
+                    "value": f"[{round(flight.get('trail',[])[0].get('lat', '??'),2)}, {round(flight.get('trail',[])[0].get('lng', '??'),2)}](https://osm.org/?mlat={flight.get('trail',[])[0].get('lat', '0')}&mlon={flight.get('trail',[])[0].get('lng', '0')})",
+                    "inline": True,
+                },
+                {
+                    "name": "Altitude:",
+                    "value": f"{round(flight.get('trail',[])[0].get('alt', 0) * 0.3048)}m",
+                    "inline": True,
+                },
+                {
+                    "name": "✈️ From",
+                    "value": flight.get("airport", {})
+                    .get("origin", {})
+                    .get("name", "N/A"),
+                    "inline": False,
+                },
+                {
+                    "name": "✈️ To",
+                    "value": flight.get("airport", {})
+                    .get("destination", {})
+                    .get("name", "N/A"),
+                    "inline": False,
+                },
             ],
-            "thumbnail": {"url": getImage(flight.get("r", ""))},
-            "url": f'https://www.flightradar24.com/data/aircraft/{flight.get("r")}',
+            "thumbnail": {
+                "url": flight.get("aircraft", {})
+                .get("images", {})
+                .get("large", {})[0]
+                .get(
+                    "src", "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
+                )
+            },
+            "url": f"https://www.flightradar24.com/{flight.get('identification', {}).get('callsign')}/{flight.get('identification', {}).get('id')}",
             "color": 16711680,
-            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
+            + "Z",
+            "image": {"url": f"attachment://{imgId}.png"},
         }
     )
 
@@ -69,19 +119,23 @@ def sendMessage():
     global embeds
     global landings
     global launches
+    global files
     if len(embeds) == 0:
         return
 
-    requests.post(
-        webhookUrl,
-        json={
-            # "content": "-# 🛬 5 Lądowań\n-# 🛫 3 Startów",
+    payload_json = json.dumps(
+        {
             "content": f'{b("🛬 {} Lądowań", landings)}\n{b("🛫 {} Startów", launches)}',
             "tts": False,
             "username": "Plane Spotter",
             "embeds": embeds,
-        },
+        }
+    )
+
+    response = requests.post(
+        webhookUrl, files=files, data={"payload_json": payload_json}
     )
     embeds = []
+    files = {}
     launches = 0
     landings = 0
