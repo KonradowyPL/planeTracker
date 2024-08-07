@@ -4,6 +4,7 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from gpstrace import makeTrace
+import sys
 
 load_dotenv()
 
@@ -29,22 +30,25 @@ b = builder
 
 def launchPlane(flight):
     global launches
-    generateEmbed("🛫 Start", flight)
+    generateEmbed("🛫 Launch", flight)
     launches += 1
 
 
 def landPlane(flight):
     global landings
-    generateEmbed("🛬 Lądowanie", flight)
+    generateEmbed("🛬 Landing", flight)
     landings += 1
 
 
 def generateEmbed(event, flight):
-    print("making embed", flight.get("aircraft", {}).get("registration"))
     imgId = str(len(files))
+    trace = makeTrace(flight.get("trail", [{"lat": 0, "lng": 0}]))
+    print(end=".")
+    sys.stdout.flush()
+
     files[imgId] = (
         f"{imgId}.png",
-        makeTrace(flight.get("trail", [{"lat": 0, "lng": 0}])),
+        trace,
         "image/png",
     )
     embeds.append(
@@ -133,6 +137,8 @@ def generateEmbed(event, flight):
             "image": {"url": f"attachment://{imgId}.png"},
         }
     )
+    print(end=".")
+    sys.stdout.flush()
 
 
 def sendMessage():
@@ -155,7 +161,8 @@ def sendMessage():
     response = requests.post(
         webhookUrl, files=files, data={"payload_json": payload_json}
     )
-
+    if response.status_code != 200:
+        print("\n",response.text)
     embeds = []
     files = {}
     launches = 0
