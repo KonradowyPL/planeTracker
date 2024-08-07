@@ -42,35 +42,49 @@ def landPlane(flight):
 def generateEmbed(event, flight):
     print("making embed", flight.get("aircraft", {}).get("registration"))
     imgId = str(len(files))
-    files[imgId] = (f"{imgId}.png", makeTrace(flight.get("trail", [{"lat":0,"lng":0}])), "image/png")
-
+    files[imgId] = (
+        f"{imgId}.png",
+        makeTrace(flight.get("trail", [{"lat": 0, "lng": 0}])),
+        "image/png",
+    )
     embeds.append(
         {
             "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
-            "description": flight.get("status", {}).get("text", ""),
+            "description": flight.get("status", {}).get(
+                "text",
+            )
+            or "",
             "fields": [
                 {
                     "name": "🛩️ Model:",
-                    "value": flight.get("aircraft", {})
-                    .get("model", {})
-                    .get("text", "??"),
+                    "value": flight.get("aircraft", {}).get("model", {}).get("text")
+                    or "??",
                     "inline": True,
                 },
                 {
                     "name": "✈️ Operator",
-                    "value": flight.get("airline", {}).get("name", "??"),
+                    "value": flight.get("airline", {}).get(
+                        "name",
+                    )
+                    or "??",
                     "inline": True,
                 },
                 {
                     "name": "ID:",
                     "value": flight.get("identification", {})
                     .get("number", {})
-                    .get("default", "??"),
+                    .get(
+                        "default",
+                    )
+                    or "??",
                     "inline": True,
                 },
                 {
                     "name": "Callsign:",
-                    "value": flight.get("identification", {}).get("callsign", "??"),
+                    "value": flight.get("identification", {}).get(
+                        "callsign",
+                    )
+                    or "??",
                     "inline": True,
                 },
                 {
@@ -87,14 +101,20 @@ def generateEmbed(event, flight):
                     "name": "✈️ From",
                     "value": flight.get("airport", {})
                     .get("origin", {})
-                    .get("name", "N/A"),
+                    .get(
+                        "name",
+                    )
+                    or "N/A",
                     "inline": False,
                 },
                 {
                     "name": "✈️ To",
                     "value": flight.get("airport", {})
                     .get("destination", {})
-                    .get("name", "N/A"),
+                    .get(
+                        "name",
+                    )
+                    or "N/A",
                     "inline": False,
                 },
             ],
@@ -135,6 +155,7 @@ def sendMessage():
     response = requests.post(
         webhookUrl, files=files, data={"payload_json": payload_json}
     )
+
     embeds = []
     files = {}
     launches = 0

@@ -18,9 +18,7 @@ def makeTrace(points):
     m.add_line(line)
     newImg = Image.open(icon)
     newImg = newImg.rotate(90-points[0]['hd'], expand=True)
-    print(newImg.size[0]/2)
     marker = ramIcon(coordinates[0], newImg, newImg.size[0]>>1,newImg.size[1]>>1)
-    # marker = IconMarker(coordinates[0], "./icon.png", 0,0)
     m.add_marker(marker)
 
     image = m.render()

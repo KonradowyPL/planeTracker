@@ -9,7 +9,7 @@ fr_api.set_flight_tracker_config(
 )
 
 
-bounds = "72.57,33.57,-16.96,53.05"  # europe
+bounds = "56.86,48.22,11.06,28.26"  # poland
 regs = {
     "HB-LUN",
     "HB-LUZ",
@@ -19,7 +19,6 @@ regs = {
     "SP-OPK",
     "SP-ISS",
     "SP-OPG",
-    "OH-LZT",
 }
 activeFlights = {}
 
