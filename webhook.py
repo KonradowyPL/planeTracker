@@ -42,7 +42,7 @@ def landPlane(flight):
 def generateEmbed(event, flight):
     print("making embed", flight.get("aircraft", {}).get("registration"))
     imgId = str(len(files))
-    files[imgId] = (f"{imgId}.png", makeTrace(flight.get("trail", [])), "image/png")
+    files[imgId] = (f"{imgId}.png", makeTrace(flight.get("trail", [{"lat":0,"lng":0}])), "image/png")
 
     embeds.append(
         {
@@ -119,6 +119,7 @@ def sendMessage():
     global embeds
     global landings
     global launches
+    global files
     if len(embeds) == 0:
         return
 
@@ -135,5 +136,6 @@ def sendMessage():
         webhookUrl, files=files, data={"payload_json": payload_json}
     )
     embeds = []
+    files = {}
     launches = 0
     landings = 0
