@@ -41,11 +41,21 @@ def landPlane(flight):
 
 
 def generateEmbed(event, flight):
+    def get(*path):
+        dat = flight
+        for key in path:
+            if (isinstance(dat, dict) and key in dat) or (
+                isinstance(dat, list) and isinstance(key, int) and len(dat) > key
+            ):
+                dat = dat[key]
+            else:
+                return None
+        return dat
+
     imgId = str(len(files))
     trace = makeTrace(flight.get("trail", [{"lat": 0, "lng": 0}]))
     print(end=".")
     sys.stdout.flush()
-
     files[imgId] = (
         f"{imgId}.png",
         trace,
@@ -53,84 +63,55 @@ def generateEmbed(event, flight):
     )
     embeds.append(
         {
-            "title": f"{event}: {flight.get('aircraft',{}).get('registration')}",
-            "description": flight.get("status", {}).get(
-                "text",
-            )
-            or "",
+            "title": f"{event}: {get('aircraft', 'registration') or '??' }",
+            "description": get("status", "text") or "",
             "fields": [
                 {
                     "name": "🛩️ Model:",
-                    "value": flight.get("aircraft", {}).get("model", {}).get("text")
-                    or "??",
+                    "value": get("aircraft", "model", "text") or "??",
                     "inline": True,
                 },
                 {
                     "name": "✈️ Operator",
-                    "value": flight.get("airline", {}).get(
-                        "name",
-                    )
-                    or "??",
+                    "value": get("airline", "name") or "??",
                     "inline": True,
                 },
                 {
                     "name": "ID:",
-                    "value": flight.get("identification", {})
-                    .get("number", {})
-                    .get(
-                        "default",
-                    )
-                    or "??",
+                    "value": get("identification", "number", "default") or "??",
                     "inline": True,
                 },
                 {
                     "name": "Callsign:",
-                    "value": flight.get("identification", {}).get(
-                        "callsign",
-                    )
-                    or "??",
+                    "value": get("identification", "callsign") or "??",
                     "inline": True,
                 },
                 {
                     "name": "📍 Position:",
-                    "value": f"[{round(flight.get('trail',[])[0].get('lat', '??'),2)}, {round(flight.get('trail',[])[0].get('lng', '??'),2)}](https://osm.org/?mlat={flight.get('trail',[])[0].get('lat', '0')}&mlon={flight.get('trail',[])[0].get('lng', '0')})",
+                    "value": f"[{round(get('trail',0,'lat') or 0, 2) or '??'}, {round(get('trail',0,'lng') or 0, 2) or '??'}](https://osm.org/?mlat={get('trail',0,'lat') or 0}&mlon={get('trail',0,'lng') or 0})",
                     "inline": True,
                 },
                 {
                     "name": "Altitude:",
-                    "value": f"{round(flight.get('trail',[])[0].get('alt', 0) * 0.3048)}m",
+                    "value": f"{round((get('trail', 0, 'alt') or 0) * 0.3048)}m",
                     "inline": True,
                 },
                 {
                     "name": "✈️ From",
-                    "value": flight.get("airport", {})
-                    .get("origin", {})
-                    .get(
-                        "name",
-                    )
-                    or "N/A",
+                    "value": get("airport", "origin", "name") or "N/A",
                     "inline": False,
                 },
                 {
                     "name": "✈️ To",
-                    "value": flight.get("airport", {})
-                    .get("destination", {})
-                    .get(
-                        "name",
-                    )
-                    or "N/A",
+                    "value": get("airport", "destination", "name") or "N/A",
                     "inline": False,
                 },
             ],
             "thumbnail": {
-                "url": flight.get("aircraft", {})
-                .get("images", {})
-                .get("large", {})[0]
-                .get(
-                    "src", "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
-                )
+                "url": get("aircraft", "images", "large", "src")
+                or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
             },
-            "url": f"https://www.flightradar24.com/{flight.get('identification', {}).get('callsign')}/{flight.get('identification', {}).get('id')}",
+            "url": f"https://www.flightradar24.com/{get('identification','callsign')}",
             "color": 16711680,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
             + "Z",

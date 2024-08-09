@@ -22,7 +22,7 @@ def getData():
     try:
         thisFlights = []
         flights = fr_api.get_flights(bounds=bounds)
-        print("\b\b\b\b\b\b\b\b\b\b\bflights:", len(flights), end=" ")
+        print("\b\b\b\b\b\b\b\b\b\b\b (a/t/e):", len(flights), end="/")
         sys.stdout.flush()
         for flight in flights:
             if flight.registration in regs:
@@ -58,11 +58,11 @@ def landEvent(hex):
 
 
 def run():
-    print(datetime.now(timezone.utc).strftime("%H:%M:%S"), "checking...", end="")
+    print(datetime.now().strftime("%H:%M:%S"), "checking...", end="")
     sys.stdout.flush()
 
     flights = getData()
-    print("tracked:", len(flights), end=" ")
+    print(len(flights), end="/")
     sys.stdout.flush()
 
     newActive = {}
@@ -78,7 +78,7 @@ def run():
         if id not in newActive:
             queue.append((landEvent, id))
 
-    print("events:", len(queue), end=": ")
+    print(len(queue), end=": ")
     for item in queue:
         item[0](item[1])
 

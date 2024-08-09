@@ -19,7 +19,7 @@ def makeTrace(points):
     coordinates = [(point["lng"], point["lat"]) for point in points]
     m = StaticMap(1024, 512, 8, 8)
 
-    line = Line(coordinates, config.get("color", "green"), 1)
+    line = Line(coordinates, config.get("color", "green"), 1, simplify=False)
     m.add_line(line)
     newImg = Image.open(icon)
     newImg = newImg.rotate(90 - points[0]["hd"], expand=True)
