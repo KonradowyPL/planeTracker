@@ -108,7 +108,7 @@ def generateEmbed(event, flight):
                 },
             ],
             "thumbnail": {
-                "url": get("aircraft", "images", "large", "src")
+                "url": get("aircraft", "images", "large", 0, "src")
                 or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
             },
             "url": f"https://www.flightradar24.com/{get('identification','callsign')}",

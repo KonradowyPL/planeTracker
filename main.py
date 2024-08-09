@@ -54,7 +54,7 @@ def landEvent(hex):
     print(end=".")
     sys.stdout.flush()
     webhook.landPlane(res)
-    del activeFlights[id]
+    del activeFlights[hex]
 
 
 def run():
