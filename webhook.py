@@ -53,14 +53,16 @@ def generateEmbed(event, flight):
         return dat
 
     imgId = str(len(files))
-    trace = makeTrace(flight.get("trail", [{"lat": 0, "lng": 0}]))
+    trace = makeTrace(flight.get("trail", []))
     print(end=".")
     sys.stdout.flush()
-    files[imgId] = (
-        f"{imgId}.png",
-        trace,
-        "image/png",
-    )
+    if trace:
+        files[imgId] = (
+            f"{imgId}.png",
+            trace,
+            "image/png",
+        )
+        
     embeds.append(
         {
             "title": f"{event}: {get('aircraft', 'registration') or '??' }",

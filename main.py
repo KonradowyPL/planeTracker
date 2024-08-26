@@ -1,8 +1,9 @@
+#!/usr/bin/python3
 import webhook
 from FlightRadar24 import FlightRadar24API, FlightTrackerConfig
 import time
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 import json
 
 config = json.load(open("config.json", "r"))
@@ -80,7 +81,10 @@ def run():
 
     print(len(queue), end=": ")
     for item in queue:
-        item[0](item[1])
+        try:
+            item[0](item[1])
+        except Exception as error:
+            print("\n", error, "\n")
 
     if len(queue) == 0:
         print("    ", end="")
@@ -89,13 +93,20 @@ def run():
     sys.stdout.flush()
 
     activeFlights.update(newActive)
-    sendWebhook()
+    try:
+        sendWebhook()
+    except Exception as error:
+        print("\n", error, "\n")
+
     print("\b\b\b\b\b\b\bdone!  ")
 
 
 def main():
     while True:
-        run()
+        try:
+            run()
+        except Exception as error:
+            print("\n", error, "\n")
         time.sleep(config.get("interval", 60))
 
 

@@ -14,8 +14,14 @@ class ramIcon(IconMarker):
         self.img = image  # do not load img from disk
         self.offset = (offset_x, offset_y)
 
-
 def makeTrace(points):
+    try:
+        return _makeTrace(points)
+    except Exception as error:
+        print("\n", error,"\n")
+        return None
+
+def _makeTrace(points):
     coordinates = [(point["lng"], point["lat"]) for point in points]
     m = StaticMap(1024, 512, 8, 8)
 
