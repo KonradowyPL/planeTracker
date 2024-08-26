@@ -18,6 +18,7 @@ In `config.json` add folowing:
   "icon": "https://example.com/icon.png",
   "interval": 60,
   "color": "blue",
+  "embedColor": "2CA3DA",
   "planes": ["HB-LUN", "HB-LUZ"],
   "bounds": "56.86,48.22,11.06,28.26"
 }
@@ -29,7 +30,8 @@ where:
 - `name` is username of your discord bot
 - `icon` is link to your discord bot avatar
 - `interval` is interval where planes are checked in
-- `color` is color of plane trace
+- `color` is color of plane trace in hex or from [Pillow list of collors](https://pillow.readthedocs.org/en/latest/reference/ImageColor.html#color-names)
+- `embedColor` is hex color of the sidebar of the embed. In this case light blue
 - `planes` is array of plane resistration numbers, that you want to track
 - `bounds` is an area where are planes you want to track in form of coma separated values:
   - max lat,

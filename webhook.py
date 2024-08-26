@@ -114,7 +114,7 @@ def generateEmbed(event, flight):
                 or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
             },
             "url": f"https://www.flightradar24.com/{get('identification','callsign')}",
-            "color": 16711680,
+            "color": int(config["embedColor"], base=16),
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
             + "Z",
             "image": {"url": f"attachment://{imgId}.png"},

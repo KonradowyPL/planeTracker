@@ -5,6 +5,8 @@ import sys
 from datetime import datetime
 import json
 import requests
+import os
+
 
 config = json.load(open("config.json", "r"))
 headers =  {
@@ -21,7 +23,14 @@ headers =  {
 
 bounds = config.get("bounds")
 regs = set(config["planes"])
-activeFlights = {}
+activeFlights = set([])
+
+
+if os.path.exists("./active.json"):
+    activeFlights = set(json.load(open("./active.json", "r")))
+else:
+     with open('./active.json', 'w') as f:
+         f.write("[]")
 
 
 def getData():
@@ -68,8 +77,7 @@ def landEvent(hex):
     print(res.get("aircraft").get("registration"), end="..")
     sys.stdout.flush()
     webhook.landPlane(res)
-    del activeFlights[hex]
-
+    activeFlights.remove(hex)
 
 def run():
     print(datetime.now().strftime("%H:%M:%S"), "checking...", end="")
@@ -85,7 +93,7 @@ def run():
     for flight in flights:
         newActive[flight] = flight
         if flight not in activeFlights:
-            activeFlights[flight] = flight
+            activeFlights.add(flight)
             queue.append((launchEvent, flight))
 
     for id in list(activeFlights):
@@ -101,6 +109,8 @@ def run():
 
     if len(queue) == 0:
         print("    ", end="")
+    else:
+        json.dump(list(activeFlights), open("./active.json", "w"))
 
     print(end="\b\b\b\b sending")
     sys.stdout.flush()
