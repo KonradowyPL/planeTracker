@@ -2,24 +2,24 @@
 import webhook
 import time
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import requests
 import os
 
 
 config = json.load(open("config.json", "r"))
-headers =  {
-        "accept-encoding": "gzip, br",
-        "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-        "cache-control": "max-age=0",
-        "origin": "https://www.flightradar24.com",
-        "referer": "https://www.flightradar24.com/",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "user-agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-    }
+headers = {
+    "accept-encoding": "gzip, br",
+    "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+    "cache-control": "max-age=0",
+    "origin": "https://www.flightradar24.com",
+    "referer": "https://www.flightradar24.com/",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
 
 bounds = config.get("bounds")
 regs = set(config["planes"])
@@ -29,8 +29,8 @@ activeFlights = set([])
 if os.path.exists("./active.json"):
     activeFlights = set(json.load(open("./active.json", "r")))
 else:
-     with open('./active.json', 'w') as f:
-         f.write("[]")
+    with open("./active.json", "w") as f:
+        f.write("[]")
 
 
 def getData():
@@ -79,7 +79,9 @@ def landEvent(hex):
     webhook.landPlane(res)
     activeFlights.remove(hex)
 
+
 def run():
+    start = time.time()
     print(datetime.now().strftime("%H:%M:%S"), "checking...", end="")
     sys.stdout.flush()
 
@@ -121,7 +123,33 @@ def run():
     except Exception as error:
         print("\n", error, "\n")
 
-    print("\b\b\b\b\b\b\bdone!  ")
+    diff = round(time.time() - start, 1)
+
+    print("\b\b\b\b\b\b\bdone in", str(diff) + "s!")
+
+    # waiting
+    if not config.get("checkHours"):
+        return
+    now = datetime.now()
+    hour = now.hour
+    if hour < config["checkHours"][0] or hour > config["checkHours"][1]:
+        target = now.replace(
+            hour=config["checkHours"][0], minute=0, second=0, microsecond=0
+        )
+        if target < now:
+            target += timedelta(days=1)
+        delay = target - now
+        print("sleeping for", delay.seconds, "seconds")
+        time.sleep(delay.seconds)
+
+    if not config.get("checkDays"):
+        return
+    now = datetime.now()
+    day = now.weekday
+    if day not in config["checkDays"]:
+        delay = (now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)) - now
+        print("sleeping for", delay.seconds, "seconds")
+        time.sleep(delay.seconds)
 
 
 def main():
