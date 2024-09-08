@@ -78,11 +78,11 @@ def generateEmbed(event, flight):
                     "value": get("airline", "name") or "??",
                     "inline": True,
                 },
-                {
+                *({
                     "name": "ID:",
                     "value": get("identification", "number", "default") or "??",
                     "inline": True,
-                },
+                } if get("identification", "number", "default") else {}),
                 {
                     "name": "Callsign:",
                     "value": get("identification", "callsign") or "??",

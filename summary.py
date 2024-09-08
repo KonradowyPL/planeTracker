@@ -4,6 +4,9 @@ from datetime import datetime
 import requests
 import sys
 import webhook
+import time
+import schedule
+
 config = json.load(open("config.json", "r"))
 
 headers = {
@@ -21,17 +24,23 @@ headers = {
 
 def start():
     run()
+    while True:
+        schedule.every().day.at("23:00").do(run)
+        time.sleep(3600)
 
 def run():
     flights = []
-    print("checking ", end="")
+    print("checking", end="")
     sys.stdout.flush()
-    for registration in config['planes']:
+    for index, registration in enumerate(config['planes']):
         flights.extend(scraper.getFlights(registration.lower(), datetime.now().date()))
-        print(".",end='')
+        print(f"\rchecking {index} of {len(config['planes'])}: {registration} ({round(index / len(config['planes']) * 100)}%)", end="")
         sys.stdout.flush()
+        time.sleep(5) # ratelimit
     print()
-    print(flights)
+    print(f"got {len(flights)} flights", end="")
+    sys.stdout.flush()
+    
     for flight in flights:
         res = requests.get(
             f"https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={flight}",
@@ -40,6 +49,7 @@ def run():
         res.raise_for_status()
         webhook.generateEmbed("✈️ FLight",res.json())
     webhook.sendMessage()
-
+    if len(flights) == 0:
+        print()
     
 
