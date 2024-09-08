@@ -26,4 +26,3 @@ def getFlights(registration:str, day:int):
             flights.append(link.get('data-flight-hex'))
     return flights
 
-print(getFlights("sp-pro", datetime.now().date()))
