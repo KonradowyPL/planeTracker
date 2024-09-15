@@ -147,6 +147,15 @@ def sendMessage():
     )
     if response.status_code != 200:
         print("\n", response.text)
+    
+    clear()
+
+
+def clear():
+    global embeds
+    global landings
+    global launches
+    global files
     embeds = []
     files = {}
     launches = 0

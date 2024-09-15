@@ -23,18 +23,20 @@ headers = {
 
 
 def start():
+    schedule.every().day.at("23:00").do(run)
     run()
     while True:
-        schedule.every().day.at("23:00").do(run)
-        time.sleep(3600)
+        schedule.run_pending()
+        time.sleep(60)
 
 def run():
+    webhook.clear()
     flights = []
     print("checking", end="")
     sys.stdout.flush()
     for index, registration in enumerate(config['planes']):
         flights.extend(scraper.getFlights(registration.lower(), datetime.now().date()))
-        print(f"\rchecking {index} of {len(config['planes'])}: {registration} ({round(index / len(config['planes']) * 100)}%)", end="")
+        print(f"\rchecking {index+1} of {len(config['planes'])}: {registration} ({round((index+1) / len(config['planes']) * 100)}%)", end="")
         sys.stdout.flush()
         time.sleep(5) # ratelimit
     print()
@@ -49,7 +51,6 @@ def run():
         res.raise_for_status()
         webhook.generateEmbed("✈️ FLight",res.json())
     webhook.sendMessage()
-    if len(flights) == 0:
-        print()
+    print()
     
 
