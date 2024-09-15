@@ -1,11 +1,10 @@
+<img src ="https://github.com/user-attachments/assets/6a19c889-326e-4bef-b1b7-9731352b6172" align="right" width="40%">
+
 # Plane Tracker
-<img src ="https://github.com/user-attachments/assets/6a19c889-326e-4bef-b1b7-9731352b6172" align="right" width="50%">
 
 A simple python code to track planes and notify you via discord webhooks
 > [!WARNING]
 > This should be used for your own educational purposes. If you are interested in accessing Flightradar24 data commercially, please contact business@fr24.com. See more information at [Flightradar24's terms and conditions](https://www.flightradar24.com/terms-and-conditions).
-
-
 
 ## Setting up
 
@@ -48,6 +47,7 @@ Summary means checking once a day for all flights. To activate it simply add thi
 `live` mode is a mode, that checks more frequently (eg: once a minute) for launches and langings and notifes You about them. To activate it add folowing lines to Your JSON:
 
 ```json
+  "mode": "live",
   "interval": 60,
   "checkHours": [9, 18],
   "checkDays": [0, 1, 2, 3, 4],
