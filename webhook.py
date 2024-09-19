@@ -58,9 +58,9 @@ def generateEmbed(event, flight):
     sys.stdout.flush()
     if trace:
         files[imgId] = (
-            f"{imgId}.png",
+            f"{imgId}.webp",
             trace,
-            "image/png",
+            "image/webp",
         )
         
     embeds.append(
@@ -117,7 +117,7 @@ def generateEmbed(event, flight):
             "color": int(config["embedColor"], base=16),
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
             + "Z",
-            "image": {"url": f"attachment://{imgId}.png"},
+            "image": {"url": f"attachment://{imgId}.webp"},
         }
     )
     print(end=".")
