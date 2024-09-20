@@ -23,7 +23,10 @@ class AttribStaticMap(StaticMap, object):
     def _draw_features(self, image):
         super(AttribStaticMap, self)._draw_features(image)
         draw = ImageDraw.Draw(image)
-        font = ImageFont.load_default()
+        try:
+            font = ImageFont.truetype(config.get("font"))
+        except Exception:    
+            font = ImageFont.load_default()
         image_width, image_height = image.size
         text_width, text_height = draw.textsize(self.attribution, font=font)
         padding = 2

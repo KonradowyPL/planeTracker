@@ -24,7 +24,8 @@ In `config.json` add following:
   "icon": "https://example.com/icon.png",
   "color": "blue",
   "embedColor": "2CA3DA",
-  "planes": ["HB-LUN", "HB-LUZ"]
+  "planes": ["HB-LUN", "HB-LUZ"],
+  "font": "/path/to/font.ttf"
 }
 ```
 
@@ -36,7 +37,8 @@ where:
 - `color` is the color of the plane trace in hex or from [Pillow's list of colors](https://pillow.readthedocs.io/en/latest/reference/ImageColor.html#color-names).
 - `embedColor` is the hex color of the sidebar of the embed. In this case, light blue.
 - `planes` is an array of plane registration numbers that you want to track.
-
+- `font` is path to ttf font file. If not specifed defeault one will be used.
+ 
 Now add mode: `live` or `summary` <br>
 Summary means checking once a day for all flights. To activate it simply add this to Your JSON
 
