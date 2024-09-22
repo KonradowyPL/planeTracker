@@ -30,7 +30,7 @@ class AttribStaticMap(StaticMap, object):
         except Exception:
             font = ImageFont.load_default()
         image_width, image_height = image.size
-        text_width, text_height = draw.textsize(self.attribution, font=font)
+        _,_,text_width, text_height = draw.textbbox((0,0), self.attribution, font=font)
         padding = 2
         x = image_width - text_width - padding
         y = image_height - text_height - padding
