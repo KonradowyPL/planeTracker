@@ -129,12 +129,22 @@ def sendMessage():
     global landings
     global launches
     global files
+
+    mode = config['mode']
+
     if len(embeds) == 0:
-        return
+        if mode != "summary":
+            return # live mode
+        return requests.post(webhookUrl, data = {'content': "No flights today :("})
+    
+    if mode == "live":
+        message = f'{b("🛬 {} Landings", landings)}\n{b("🛫 {} Launches", launches)}',
+    else:
+        message = f"{len(embeds)} flights today:"
 
     payload_json = json.dumps(
         {
-            "content": f'{b("🛬 {} Landings", landings)}\n{b("🛫 {} Launches", launches)}',
+            "content": message,
             "tts": False,
             "username": config.get("name"),
             "embeds": embeds,

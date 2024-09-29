@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import json
 import scraper
 from datetime import datetime
@@ -66,3 +67,7 @@ def _run():
         webhook.generateEmbed("✈️ FLight", res.json())
     webhook.sendMessage()
     print()
+
+
+if __name__ == "__main__":
+    run()
