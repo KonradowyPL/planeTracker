@@ -34,7 +34,7 @@ where:
 - `webhook` is your Discord webhook URL.
 - `name` is the username of your Discord bot.
 - `icon` is the link to your Discord bot avatar.
-- `color` is the color of the plane trace in hex or from [Pillow's list of colors](https://pillow.readthedocs.io/en/latest/reference/ImageColor.html#color-names).
+- `color` is the color of the plane trace in hex or from [Pillow's list of colors](https://pillow.readthedocs.io/en/latest/reference/ImageColor.html#color-names). If you remove this field, line color will be calculated according to [this](https://support.fr24.com/support/solutions/articles/3000115027-why-does-the-aircraft-s-trail-change-colour)
 - `embedColor` is the hex color of the sidebar of the embed. In this case, light blue.
 - `planes` is an array of plane registration numbers that you want to track.
 - `font` is path to ttf font file. If not specifed defeault one will be used.

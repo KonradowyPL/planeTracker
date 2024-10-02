@@ -48,9 +48,8 @@ def makeTrace(points):
     return _makeTrace(points)
 
 
-
 def _makeTrace(points):
-    coordinates = [(point["lng"], point["lat"]) for point in points]
+    coordinates = [(point["lng"], point["lat"], point['alt'] * 0.3048) for point in points]
     m = AttribStaticMap(1024, 512, 8, 8)
 
     if config.get("debug_bbox_render"):
@@ -69,9 +68,19 @@ def _makeTrace(points):
                     2,
                 )
             )
+    if color := config.get("color"):
+        line = Line(coordinates, color, 2, simplify=False)
+        m.add_line(line)
+    else:
+        current = ()
+        for index, point in enumerate(coordinates):
+            if index == 0:
+                current = point
+                continue
+            line = Line([current, point], lineColor(point[2]), 2, simplify=False)
+            m.add_line(line)
+            current = point
 
-    line = Line(coordinates, config.get("color", "green"), 2, simplify=False)
-    m.add_line(line)
     newImg = Image.open(icon)
     newImg = newImg.rotate(90 - points[0]["hd"], expand=True, resample=Image.BICUBIC)
     marker = ramIcon(coordinates[0], newImg, newImg.size[0] >> 1, newImg.size[1] >> 1)
@@ -97,6 +106,49 @@ def convert(points, distance_apart=1):
             current = (newx, newy)
 
     return new
+
+
+# color values from
+# https://support.fr24.com/support/solutions/articles/3000115027-why-does-the-aircraft-s-trail-change-colour
+colors = {
+    13000: "#ff0000",
+    12500: "#ff00e4",
+    12000: "#d800ff",
+    11500: "#ae00ff",
+    11000: "#9600ff",
+    10500: "#7800ff",
+    10000: "#6000ff",
+    9500: "#4e00ff",
+    9000: "#3600ff",
+    8500: "#2400ff",
+    8000: "#1200ff",
+    7500: "#0000ff",
+    7000: "#001eff",
+    6500: "#0030ff",
+    6000: "#0054ff",
+    5500: "#0078ff",
+    5000: "#0096ff",
+    4500: "#00a8ff",
+    4000: "#00c0ff",
+    3500: "#00eaff",
+    3000: "#00ffe4",
+    2500: "#00ffd2",
+    2000: "#00ff9c",
+    1500: "#00ff72",
+    1200: "#00ff36",
+    1000: "#00ff0c",
+    800: "#1eff00",
+    600: "#42ff00",
+    400: "#ccff00",
+    300: "#f0ff00",
+    200: "#ffea00",
+    100: "#ffe062",
+}
+
+
+def lineColor(height):
+    closest_key = min(colors.keys(), key=lambda k: abs(k - height))
+    return colors[closest_key]
 
 
 def find_dense_squares(points, resolution):
