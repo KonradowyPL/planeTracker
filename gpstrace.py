@@ -45,10 +45,9 @@ class AttribStaticMap(StaticMap, object):
 
 
 def makeTrace(points):
-    return _makeTrace(points)
-
-
-def _makeTrace(points):
+    if len(points) < 1:
+        return None
+    
     coordinates = [(point["lng"], point["lat"], point['alt'] * 0.3048) for point in points]
     m = AttribStaticMap(1024, 512, 8, 8)
 
@@ -93,7 +92,7 @@ def _makeTrace(points):
     return buffer
 
 
-def convert(points, distance_apart=1):
+def convert(points, distance_apart: int | float=1):
     current = (99999, 99999)
     new = []
     for point in points:

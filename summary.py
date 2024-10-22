@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import json
 import scraper
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import sys
 import webhook
@@ -34,6 +34,7 @@ def start():
         except KeyboardInterrupt:
             exit(130)
 
+
 def run():
     try:
         _run()
@@ -41,13 +42,14 @@ def run():
         traceback.print_exc()
 
 
-def _run():
+def _run(delta=0):
     webhook.clear()
     date = datetime.now().strftime(r"%d %m, %H:%M:%S")
     flights = []
     sys.stdout.flush()
     for index, registration in enumerate(config["planes"]):
-        flights.extend(scraper.getFlights(registration.lower(), datetime.now().date()))
+        flights.extend(scraper.getFlights(registration.lower(),
+                       datetime.now().date() + timedelta(days=delta)))
         print(
             f"\r[{date}] checking {index+1} of {len(config['planes'])}: {registration} ({round((index+1) / len(config['planes']) * 100)}%)",
             end="",
@@ -70,4 +72,8 @@ def _run():
 
 
 if __name__ == "__main__":
-    run()
+    if len(sys.argv) < 1:
+        delta = 0
+    else:
+        delta = int(sys.argv[1])
+    _run(delta=delta)
