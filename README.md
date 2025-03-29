@@ -39,34 +39,8 @@ where:
 - `planes` is an array of plane registration numbers that you want to track.
 - `font` is path to ttf font file. If not specifed defeault one will be used.
  
-Now add mode: `live` or `summary` <br>
-Summary means checking once a day for all flights. To activate it simply add this to Your JSON
 
-```json
-   "mode":"summary"
-```
-
-`live` mode is a mode, that checks more frequently (eg: once a minute) for launches and langings and notifes You about them. To activate it add folowing lines to Your JSON:
-
-```json
-  "mode": "live",
-  "interval": 60,
-  "checkHours": [9, 18],
-  "checkDays": [0, 1, 2, 3, 4],
-  "bounds": "56.86,48.22,11.06,28.26"
-```
-
-where:
-
-- `interval` is the interval at which planes are checked.
-- `checkHours` is an array where the first and second values define the range of hours during which your code will check for planes. In this example, checks will be performed between 9 AM and 6 PM. Useful when you don't want to check during the night.
-- `checkDays` is an array of weekday integers where Monday == 0 and Sunday == 6. In this example, checks will be performed between Monday and Friday. Useful if the planes you want to track don't fly during weekends and you want to save on bandwidth.
-- `bounds` is the area where the planes you want to track are located, in the form of comma-separated values:
-  - max lat,
-  - min lat,
-  - max lon,
-  - min lon
-
+Note: Live mode, that periodically checks for new takeofs and landings has been discontinued. If you still want to acces it, it will be avaiable on `live-mode` branch.
 
 ## Contributing
 Feel free to open issues and make PRs.

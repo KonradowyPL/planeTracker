@@ -1,5 +1,4 @@
 import requests
-import os
 import json
 from datetime import datetime, timezone
 from gpstrace import makeTrace

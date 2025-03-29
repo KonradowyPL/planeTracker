@@ -6,7 +6,6 @@ import requests
 import sys
 import webhook
 import time
-import schedule
 import traceback
 
 config = json.load(open("config.json", "r"))
@@ -22,17 +21,6 @@ headers = {
     "sec-fetch-site": "same-site",
     "user-agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
-
-
-def start():
-    schedule.every().day.at("23:00").do(run)
-    run()
-    while True:
-        schedule.run_pending()
-        try:
-            time.sleep(600)
-        except KeyboardInterrupt:
-            exit(130)
 
 
 def run():
