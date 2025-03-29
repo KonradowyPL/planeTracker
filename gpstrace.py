@@ -1,11 +1,8 @@
-from staticmap import StaticMap, Line, IconMarker, Polygon
+from staticmap import StaticMap, Line, IconMarker
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
-import json
-import numpy as np
 from collections import defaultdict
-
-config = json.load(open("config.json", "r"))
+from utils import config
 
 icon = open("./icon.png", "rb")
 
@@ -47,8 +44,9 @@ class AttribStaticMap(StaticMap, object):
 def makeTrace(points):
     if len(points) < 1:
         return None
-    
-    coordinates = [(point["lng"], point["lat"], point['alt'] * 0.3048) for point in points]
+
+    coordinates = [(point["lng"], point["lat"], point['alt'] * 0.3048)
+                   for point in points]
     m = AttribStaticMap(1024, 512, 8, 8)
 
     if config.get("debug_bbox_render"):
@@ -76,13 +74,16 @@ def makeTrace(points):
             if index == 0:
                 current = point
                 continue
-            line = Line([current, point], lineColor(point[2]), 2, simplify=False)
+            line = Line([current, point], lineColor(
+                point[2]), 2, simplify=False)
             m.add_line(line)
             current = point
 
     newImg = Image.open(icon)
-    newImg = newImg.rotate(90 - points[0]["hd"], expand=True, resample=Image.BICUBIC)
-    marker = ramIcon(coordinates[0], newImg, newImg.size[0] >> 1, newImg.size[1] >> 1)
+    newImg = newImg.rotate(
+        90 - points[0]["hd"], expand=True, resample=Image.BICUBIC)
+    marker = ramIcon(coordinates[0], newImg,
+                     newImg.size[0] >> 1, newImg.size[1] >> 1)
     m.add_marker(marker)
 
     image = m.render()
@@ -92,7 +93,7 @@ def makeTrace(points):
     return buffer
 
 
-def convert(points, distance_apart: int | float=1):
+def convert(points, distance_apart: int | float = 1):
     current = (99999, 99999)
     new = []
     for point in points:
@@ -157,7 +158,8 @@ def find_dense_squares(points, resolution):
     # Count points in each square
     for x, y in points:
         # Find the bottom-left corner of the square for each point
-        square = (int(x * resolution) / resolution, int(y * resolution) / resolution)
+        square = (int(x * resolution) / resolution,
+                  int(y * resolution) / resolution)
         square_count[square] += 1
     return square_count
 

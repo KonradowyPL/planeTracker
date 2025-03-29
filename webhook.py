@@ -2,10 +2,9 @@ import requests
 import json
 from datetime import datetime, timezone
 from gpstrace import makeTrace
+from utils import config, headers
 import sys
 
-
-config = json.load(open("config.json", "r"))
 
 webhookUrl = config["webhook"]
 launches = 0
@@ -18,7 +17,7 @@ files = {}
 # else returns empty string or param
 # builder("hello, {}", "world") -> "hello, world"
 # builder("hello, {}", None, empty="no helllo") -> "no hello"
-def builder(string: str, replace: str, empty=""):
+def builder(string: str, replace, empty=""):
     if replace:
         return string.format(replace)
     return empty
@@ -26,25 +25,13 @@ def builder(string: str, replace: str, empty=""):
 
 b = builder
 
-
-def launchPlane(flight):
-    global launches
-    generateEmbed("🛫 Launch", flight)
-    launches += 1
-
-
-def landPlane(flight):
-    global landings
-    generateEmbed("🛬 Landing", flight)
-    landings += 1
-
-
 def generateEmbed(event, flight):
     def get(*path):
         dat = flight
         for key in path:
             if (isinstance(dat, dict) and key in dat) or (
-                isinstance(dat, list) and isinstance(key, int) and len(dat) > key
+                isinstance(dat, list) and isinstance(
+                    key, int) and len(dat) > key
             ):
                 dat = dat[key]
             else:
@@ -61,7 +48,7 @@ def generateEmbed(event, flight):
             trace,
             "image/webp",
         )
-        
+
     embeds.append(
         {
             "title": f"{event}: {get('aircraft', 'registration') or '??' }",
@@ -133,9 +120,9 @@ def sendMessage():
 
     if len(embeds) == 0:
         if mode != "summary":
-            return # live mode
-        return requests.post(webhookUrl, data = {'content': "No flights today :("})
-    
+            return  # live mode
+        return requests.post(webhookUrl, data={'content': "No flights today :("})
+
     if mode == "live":
         message = f'{b("🛬 {} Landings", landings)}\n{b("🛫 {} Launches", launches)}',
     else:
@@ -156,7 +143,7 @@ def sendMessage():
     )
     if response.status_code != 200:
         print("\n", response.text)
-    
+
     clear()
 
 

@@ -8,6 +8,7 @@ import time
 
 config = json.load(open("config.json", "r"))
 
+
 def main():
     schedule.every().day.at("23:00").do(summary.run)
     summary.run()
