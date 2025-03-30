@@ -44,7 +44,7 @@ class AttribStaticMap(StaticMap, object):
     def determine_extent(self, zoom=None) -> tuple[float, float, float, float]:
         if self.extent is None:
             return super().determine_extent(zoom)
-        return self.extent
+        return max(self.extent, super().determine_extent(zoom))
 
 
 def makeTrace(points):
@@ -123,7 +123,7 @@ def find_dense_squares(points, resolution):
 
 
 def get_bounding_box(coordinates):
-    resolution = 1 / 0.1
+    resolution = 30
 
     spaced = convert(coordinates, distance_apart=1 / resolution)
     squares = find_dense_squares(spaced, resolution=resolution)

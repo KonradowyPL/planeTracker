@@ -25,6 +25,7 @@ def builder(string: str, replace, empty=""):
 
 b = builder
 
+
 def generateEmbed(event, flight):
     def get(*path):
         dat = flight
@@ -74,24 +75,24 @@ def generateEmbed(event, flight):
                     "value": get("identification", "callsign") or "??",
                     "inline": True,
                 },
+                # {
+                #     "name": "📍 Position:",
+                #     "value": f"[{round(get('trail',0,'lat') or 0, 2) or '??'}, {round(get('trail',0,'lng') or 0, 2) or '??'}](https://osm.org/?mlat={get('trail',0,'lat') or 0}&mlon={get('trail',0,'lng') or 0})",
+                #     "inline": True,
+                # },
+                # {
+                #     "name": "Altitude:",
+                #     "value": f"{round((get('trail', 0, 'alt') or 0) * 0.3048)}m",
+                #     "inline": True,
+                # },
                 {
-                    "name": "📍 Position:",
-                    "value": f"[{round(get('trail',0,'lat') or 0, 2) or '??'}, {round(get('trail',0,'lng') or 0, 2) or '??'}](https://osm.org/?mlat={get('trail',0,'lat') or 0}&mlon={get('trail',0,'lng') or 0})",
-                    "inline": True,
-                },
-                {
-                    "name": "Altitude:",
-                    "value": f"{round((get('trail', 0, 'alt') or 0) * 0.3048)}m",
-                    "inline": True,
-                },
-                {
-                    "name": "✈️ From",
-                    "value": get("airport", "origin", "name") or "N/A",
+                    "name": "🛫 From",
+                    "value": (get("airport", "origin", "name") or "N/A") + b("  (<t:{}:t>)", get("time", "real", "departure"), ""),
                     "inline": False,
                 },
                 {
-                    "name": "✈️ To",
-                    "value": get("airport", "destination", "name") or "N/A",
+                    "name": "🛬 To",
+                    "value": (get("airport", "destination", "name") or "N/A") + b("  (<t:{}:t>)", get("time", "real", "arrival"), ""),
                     "inline": False,
                 },
             ],
@@ -116,10 +117,8 @@ def sendMessage():
     global launches
     global files
 
-
     if len(embeds) == 0:
         return requests.post(webhookUrl, data={'content': "No flights today :("})
-
 
     message = f"{len(embeds)} flights today:"
 
