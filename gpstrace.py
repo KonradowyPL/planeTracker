@@ -2,7 +2,7 @@ from staticmap import StaticMap, Line, IconMarker
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
 from collections import defaultdict
-from utils import config
+from utils import config, colors
 
 icon = open("./icon.png", "rb")
 
@@ -17,6 +17,7 @@ class ramIcon(IconMarker):
 class AttribStaticMap(StaticMap, object):
     def __init__(self, *args, **kwargs):
         self.attribution = "© OpenStreetMap-Contributors"
+        self.extent: tuple[float, float, float, float] | None = None
         super(AttribStaticMap, self).__init__(*args, **kwargs)
 
     def _draw_features(self, image):
@@ -40,6 +41,11 @@ class AttribStaticMap(StaticMap, object):
         )
         draw.text((x, y), self.attribution, font=font, fill="black")
 
+    def determine_extent(self, zoom=None) -> tuple[float, float, float, float]:
+        if self.extent is None:
+            return super().determine_extent(zoom)
+        return self.extent
+
 
 def makeTrace(points):
     if len(points) < 1:
@@ -49,22 +55,12 @@ def makeTrace(points):
                    for point in points]
     m = AttribStaticMap(1024, 512, 8, 8)
 
-    if config.get("debug_bbox_render"):
-        minlat, maxlat, minlng, maxlng = get_bounding_box(coordinates)
+    if config.get("clipOrtophoto"):
+        minlng, maxlng, minlat, maxlat = get_bounding_box(coordinates)
         if minlat < 100 and minlng < 100:
-            m.add_line(
-                Line(
-                    [
-                        [minlat, minlng],
-                        [minlat, maxlng],
-                        [maxlat, maxlng],
-                        [maxlat, minlng],
-                        [minlat, minlng],
-                    ],
-                    "#ff000040",
-                    2,
-                )
-            )
+            m.extent = (minlng, minlat, maxlng, maxlat)
+            m.padding = 100, 100
+
     if color := config.get("color"):
         line = Line(coordinates, color, 2, simplify=False)
         m.add_line(line)
@@ -108,44 +104,6 @@ def convert(points, distance_apart: int | float = 1):
     return new
 
 
-# color values from
-# https://support.fr24.com/support/solutions/articles/3000115027-why-does-the-aircraft-s-trail-change-colour
-colors = {
-    13000: "#ff0000",
-    12500: "#ff00e4",
-    12000: "#d800ff",
-    11500: "#ae00ff",
-    11000: "#9600ff",
-    10500: "#7800ff",
-    10000: "#6000ff",
-    9500: "#4e00ff",
-    9000: "#3600ff",
-    8500: "#2400ff",
-    8000: "#1200ff",
-    7500: "#0000ff",
-    7000: "#001eff",
-    6500: "#0030ff",
-    6000: "#0054ff",
-    5500: "#0078ff",
-    5000: "#0096ff",
-    4500: "#00a8ff",
-    4000: "#00c0ff",
-    3500: "#00eaff",
-    3000: "#00ffe4",
-    2500: "#00ffd2",
-    2000: "#00ff9c",
-    1500: "#00ff72",
-    1200: "#00ff36",
-    1000: "#00ff0c",
-    800: "#1eff00",
-    600: "#42ff00",
-    400: "#ccff00",
-    300: "#f0ff00",
-    200: "#ffea00",
-    100: "#ffe062",
-}
-
-
 def lineColor(height):
     closest_key = min(colors.keys(), key=lambda k: abs(k - height))
     return colors[closest_key]
@@ -170,21 +128,21 @@ def get_bounding_box(coordinates):
     spaced = convert(coordinates, distance_apart=1 / resolution)
     squares = find_dense_squares(spaced, resolution=resolution)
 
-    minlat = minlng = 360
-    maxlat = maxlng = -360
+    minlng = minlat = 360
+    maxlng = maxlat = -360
 
     for square in squares:
         this = squares[square]
-        if this >= 2:
+        if this >= 3:
             # m.add_marker(IconMarker(square, "./icon.png", 22, 22))
-            minlat = min(minlat, square[0])
-            maxlat = max(maxlat, square[0])
-            minlng = min(minlng, square[1])
-            maxlng = max(maxlng, square[1])
+            minlng = min(minlng, square[0])
+            maxlng = max(maxlng, square[0])
+            minlat = min(minlat, square[1])
+            maxlat = max(maxlat, square[1])
 
-    minlat += 0.5 / resolution
-    maxlat += 0.5 / resolution
-    minlng += 0.5 / resolution
-    maxlng += 0.5 / resolution
+    minlng += 1 / resolution
+    maxlng += 1 / resolution
+    minlat += 1 / resolution
+    maxlat += 1 / resolution
 
-    return minlat, maxlat, minlng, maxlng
+    return minlng, maxlng, minlat, maxlat

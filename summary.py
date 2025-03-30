@@ -46,7 +46,7 @@ def _run(delta=0):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 1:
+    if len(sys.argv) <= 1:
         delta = 0
     else:
         delta = int(sys.argv[1])
