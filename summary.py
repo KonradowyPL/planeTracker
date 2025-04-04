@@ -35,6 +35,7 @@ def _run(delta=0):
     sys.stdout.flush()
 
     for flight in flights:
+        print(f"https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={flight}")
         res = requests.get(
             f"https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={flight}",
             headers=headers,

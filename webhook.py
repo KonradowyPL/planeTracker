@@ -39,7 +39,7 @@ def generateEmbed(event, flight):
                 return None
         return dat
 
-    imgId = str(len(files))
+    imgId = get("identification", 'id') or str(len(files))
     trace = makeTrace(flight.get("trail", []))
     print(end=".")
     sys.stdout.flush()
@@ -122,21 +122,29 @@ def sendMessage():
 
     message = f"{len(embeds)} flights today:"
 
-    payload_json = json.dumps(
-        {
-            "content": message,
-            "tts": False,
-            "username": config.get("name"),
-            "embeds": embeds,
-            "icon": config.get("icon"),
-        }
-    )
+    for index in range(0, len(embeds), 10):
+        msgEmbeds = embeds[index:(index+10)]
+        embed_img_ids = set(embed['image']['url'].split('attachment://')[1].replace('.webp', '') for embed in msgEmbeds)
+        filtered_files = {imgId: file_data for imgId, file_data in files.items() if imgId in embed_img_ids}
+        print(embed_img_ids, filtered_files)
 
-    response = requests.post(
-        webhookUrl, files=files, data={"payload_json": payload_json}
-    )
-    if response.status_code != 200:
-        print("\n", response.text)
+        payload_json = json.dumps(
+            {
+                "content": message,
+                "tts": False,
+                "username": config.get("name"),
+                "embeds": msgEmbeds,
+                "icon": config.get("icon"),
+            }
+        )
+
+        message = ""
+
+        response = requests.post(
+            webhookUrl, files=filtered_files, data={"payload_json": payload_json}
+        )
+        if response.status_code != 200:
+            print("\n", response.text)
 
     clear()
 
