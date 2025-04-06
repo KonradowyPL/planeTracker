@@ -51,3 +51,9 @@ colors = {
     200: "#ffea00",
     100: "#ffe062",
 }
+
+bounds = None
+if config.get("bounds"):
+    bounds = list(map(float, config['bounds'].split(",")))
+
+print(bounds)

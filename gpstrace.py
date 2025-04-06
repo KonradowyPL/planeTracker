@@ -2,7 +2,7 @@ from staticmap import StaticMap, Line, IconMarker
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
 from collections import defaultdict
-from utils import config, colors
+from utils import config, colors, bounds
 
 icon = open("./icon.png", "rb")
 
@@ -47,12 +47,27 @@ class AttribStaticMap(StaticMap, object):
         return max(self.extent, super().determine_extent(zoom))
 
 
+def inBounds(coordinates: list[tuple[float, float, float]]):
+    for pos in coordinates:
+        if pos[1] < bounds[0] and \
+                pos[1] > bounds[1] and \
+                pos[0] > bounds[2] and \
+                pos[0] < bounds[3]:
+            print(pos[1], bounds)
+            return True
+    return False
+
+
 def makeTrace(points):
     if len(points) < 1:
         return None
 
     coordinates = [(point["lng"], point["lat"], point['alt'] * 0.3048)
                    for point in points]
+
+    if bounds and not inBounds(coordinates):
+        return None
+
     m = AttribStaticMap(1024, 512, 8, 8)
 
     if config.get("clipOrtophoto"):

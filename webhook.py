@@ -10,6 +10,7 @@ webhookUrl = config["webhook"]
 launches = 0
 landings = 0
 embeds = []
+skipped = []
 files = {}
 
 
@@ -49,6 +50,14 @@ def generateEmbed(event, flight):
             trace,
             "image/webp",
         )
+    else:
+        _from = (get("airport", "origin", "name") or "N/A") + \
+            b("  (<t:{}:t>)", get("time", "real", "departure"), "")
+        to = (get("airport", "destination", "name") or "N/A") + \
+            b("  (<t:{}:t>)", get("time", "real", "arrival"), "")
+        addSkipped(
+            f"[{get('aircraft', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {_from} to: {to}")
+        return
 
     embeds.append(
         {
@@ -111,21 +120,33 @@ def generateEmbed(event, flight):
     sys.stdout.flush()
 
 
+def addSkipped(text):
+    global skipped
+    skipped.append(text)
+
+
 def sendMessage():
     global embeds
     global landings
     global launches
+    global skipped
     global files
 
     if len(embeds) == 0:
         return requests.post(webhookUrl, data={'content': "No flights today :("})
 
-    message = f"{len(embeds)} flights today:"
+    message = f"{len(embeds) + len(skipped)} flights today:\n"
+
+    message += "\n".join(skipped)
+
+    
 
     for index in range(0, len(embeds), 10):
         msgEmbeds = embeds[index:(index+10)]
-        embed_img_ids = set(embed['image']['url'].split('attachment://')[1].replace('.webp', '') for embed in msgEmbeds)
-        filtered_files = {imgId: file_data for imgId, file_data in files.items() if imgId in embed_img_ids}
+        embed_img_ids = set(embed['image']['url'].split(
+            'attachment://')[1].replace('.webp', '') for embed in msgEmbeds)
+        filtered_files = {imgId: file_data for imgId,
+                          file_data in files.items() if imgId in embed_img_ids}
         print(embed_img_ids, filtered_files)
 
         payload_json = json.dumps(
@@ -141,7 +162,8 @@ def sendMessage():
         message = ""
 
         response = requests.post(
-            webhookUrl, files=filtered_files, data={"payload_json": payload_json}
+            webhookUrl, files=filtered_files, data={
+                "payload_json": payload_json}
         )
         if response.status_code != 200:
             print("\n", response.text)
@@ -156,5 +178,6 @@ def clear():
     global files
     embeds = []
     files = {}
+    skipped = []
     launches = 0
     landings = 0
