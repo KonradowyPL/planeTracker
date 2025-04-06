@@ -18,30 +18,36 @@ def run():
 
 def _run(delta=0):
     webhook.clear()
-    date = datetime.now().strftime(r"%d %m, %H:%M:%S")
+    date = datetime.now().date() + timedelta(days=delta)
     flights = []
-    sys.stdout.flush()
     for index, registration in enumerate(config["planes"]):
-        flights.extend(scraper.getFlights(registration.lower(),
-                       datetime.now().date() + timedelta(days=delta)))
         print(
-            f"\r[{date}] checking {index+1} of {len(config['planes'])}: {registration} ({round((index+1) / len(config['planes']) * 100)}%)",
+            f"[{index+1} / {len(config['planes'])}] {registration}",
             end="",
         )
         sys.stdout.flush()
-        time.sleep(5)  # ratelimit
-    print()
-    print(f"got {len(flights)} flights", end="")
-    sys.stdout.flush()
 
-    for flight in flights:
-        print(f"https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={flight}")
+        current = scraper.getFlights(registration.lower(),
+                                     date)
+        flights.extend(current)
+        print(f": {len(current)}")
+
+        if (index+1 != len(config['planes'])):
+            time.sleep(5)  # ratelimit
+    print(f"got {len(flights)} flights")
+
+    for index, flight in enumerate(flights):
+
+        print(f"Generating map ({index + 1} of {len(flights)})   \r", end="")
+        sys.stdout.flush()
+
         res = requests.get(
             f"https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={flight}",
             headers=headers,
         )
         res.raise_for_status()
         webhook.generateEmbed("✈️ FLight", res.json())
+    webhook.delta = delta
     webhook.sendMessage()
     print()
 

@@ -55,5 +55,3 @@ colors = {
 bounds = None
 if config.get("bounds"):
     bounds = list(map(float, config['bounds'].split(",")))
-
-print(bounds)

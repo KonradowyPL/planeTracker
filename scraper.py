@@ -16,4 +16,4 @@ def getFlights(registration: str, day):
         date = datetime.fromtimestamp(timestamp).date()
         if date == day:
             flights.append(link.get('data-flight-hex'))
-    return flights
+    return flights[::-1]

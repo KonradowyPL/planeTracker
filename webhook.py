@@ -2,9 +2,9 @@ import requests
 import json
 from datetime import datetime, timezone
 from gpstrace import makeTrace
-from utils import config, headers
-import sys
+from utils import config
 
+delta = 0
 
 webhookUrl = config["webhook"]
 launches = 0
@@ -42,8 +42,6 @@ def generateEmbed(event, flight):
 
     imgId = get("identification", 'id') or str(len(files))
     trace = makeTrace(flight.get("trail", []))
-    print(end=".")
-    sys.stdout.flush()
     if trace:
         files[imgId] = (
             f"{imgId}.webp",
@@ -116,8 +114,6 @@ def generateEmbed(event, flight):
             "image": {"url": f"attachment://{imgId}.webp"},
         }
     )
-    print(end=".")
-    sys.stdout.flush()
 
 
 def addSkipped(text):
@@ -135,11 +131,12 @@ def sendMessage():
     if len(embeds) == 0:
         return requests.post(webhookUrl, data={'content': "No flights today :("})
 
-    message = f"{len(embeds) + len(skipped)} flights today:\n"
+    message = f"{len(embeds) + len(skipped)} flight(s) today:\n"
+
+    if delta != 0:
+        message = f"-# This report is based on flight data from {-delta} day(s) ago\n" + message
 
     message += "\n".join(skipped)
-
-    
 
     for index in range(0, len(embeds), 10):
         msgEmbeds = embeds[index:(index+10)]
@@ -147,7 +144,6 @@ def sendMessage():
             'attachment://')[1].replace('.webp', '') for embed in msgEmbeds)
         filtered_files = {imgId: file_data for imgId,
                           file_data in files.items() if imgId in embed_img_ids}
-        print(embed_img_ids, filtered_files)
 
         payload_json = json.dumps(
             {

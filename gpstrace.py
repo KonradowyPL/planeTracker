@@ -53,7 +53,6 @@ def inBounds(coordinates: list[tuple[float, float, float]]):
                 pos[1] > bounds[1] and \
                 pos[0] > bounds[2] and \
                 pos[0] < bounds[3]:
-            print(pos[1], bounds)
             return True
     return False
 
