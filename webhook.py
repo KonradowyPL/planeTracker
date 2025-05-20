@@ -128,15 +128,19 @@ def sendMessage():
     global skipped
     global files
 
-    if len(embeds) == 0:
+    if len(embeds) + len(skipped) == 0:
         return requests.post(webhookUrl, data={'content': "No flights today :("})
 
-    message = f"{len(embeds) + len(skipped)} flight(s) today:\n"
+    message = ""
 
     if delta != 0:
-        message = f"-# This report is based on flight data from {-delta} day(s) ago\n" + message
+        message = f"-# This report is based on flight data from {-delta} day(s) ago\n"
 
-    message += "\n".join(skipped)
+    if len(skipped) > 0:
+        message += f"{len(skipped)} skipped flights.\n"
+        message += "\n".join(skipped)
+
+    message += f"\n{len(embeds)} flights today:"
 
     for index in range(0, len(embeds), 10):
         msgEmbeds = embeds[index:(index+10)]
