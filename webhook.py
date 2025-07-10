@@ -140,6 +140,24 @@ def sendMessage():
         message += f"{len(skipped)} skipped flights.\n"
         message += "\n".join(skipped)
 
+    if len(embeds) == 0:
+        payload_json = json.dumps(
+            {
+                "content": message,
+                "tts": False,
+                "username": config.get("name"),
+                "icon": config.get("icon"),
+            }
+        )
+
+        response = requests.post(
+            webhookUrl, data={
+                "payload_json": payload_json}
+        )
+        response.raise_for_status()
+        clear()
+        return
+
     message += f"\n{len(embeds)} flights today:"
 
     for index in range(0, len(embeds), 10):
@@ -165,8 +183,10 @@ def sendMessage():
             webhookUrl, files=filtered_files, data={
                 "payload_json": payload_json}
         )
-        if response.status_code != 200:
-            print("\n", response.text)
+
+        response.raise_for_status()
+
+        print("\n", response.text)
 
     clear()
 
