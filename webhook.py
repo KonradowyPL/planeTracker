@@ -134,7 +134,7 @@ def sendMessage():
     message = ""
 
     if delta != 0:
-        message = f"-# This report is based on flight data from {-delta} day(s) ago\n"
+        message = f"**This report is based on flight data from {-delta} day(s) ago**\n"
 
     if len(skipped) > 0:
         message += f"{len(skipped)} skipped flights.\n"
