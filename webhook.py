@@ -158,7 +158,7 @@ def sendMessage():
         clear()
         return
 
-    message += f"\n{len(embeds)} flights today:"
+    message += f"\n{len(embeds)} flight{'s' if len(embeds) > 1 else ''} today:"
 
     for index in range(0, len(embeds), 10):
         msgEmbeds = embeds[index:(index+10)]

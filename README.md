@@ -25,7 +25,8 @@ In `config.json` add following:
   "color": "blue",
   "embedColor": "2CA3DA",
   "planes": ["HB-LUN", "HB-LUZ"],
-  "font": "/path/to/font.ttf"
+  "font": "/path/to/font.ttf",
+  "userAgent": "PlaneTracker/0.0 (example@example.com)"
 }
 ```
 
@@ -38,7 +39,7 @@ where:
 - `embedColor` is the hex color of the sidebar of the embed. In this case, light blue.
 - `planes` is an array of plane registration numbers that you want to track.
 - `font` is path to ttf font file. If not specifed defeault one will be used.
- 
+- `userAgent` is User-Agent sent with requests. It is recommended to put here Your contact email.
 
 Note: Live mode, that periodically checks for new takeofs and landings has been discontinued. If you still want to acces it, it will be avaiable on `live-mode` branch.
 

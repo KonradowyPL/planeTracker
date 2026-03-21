@@ -19,6 +19,7 @@ class AttribStaticMap(StaticMap, object):
         self.attribution = "© OpenStreetMap-Contributors"
         self.extent: tuple[float, float, float, float] | None = None
         super(AttribStaticMap, self).__init__(*args, **kwargs)
+        self.headers = {"User-Agent": f"StaticMap-{config['userAgent']}"}
 
     def _draw_features(self, image):
         super(AttribStaticMap, self)._draw_features(image)
