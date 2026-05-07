@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 import scraper
 from datetime import datetime, timedelta
-import requests
+import requests_wrapper
 import sys
 import webhook
 import time
 import traceback
-from utils import config, headers
+from utils import config
+import json
 
 
 def run():
@@ -27,12 +28,11 @@ def _run(delta=0):
         )
         sys.stdout.flush()
 
-        current = scraper.getFlights(registration.lower(),
-                                     date)
+        current = scraper.getFlights(registration.lower(), date)
         flights.extend(current)
         print(f": {len(current)}")
 
-        if (index+1 != len(config['planes'])):
+        if index + 1 != len(config["planes"]):
             time.sleep(5)  # ratelimit
     print(f"got {len(flights)} flights")
 
@@ -41,12 +41,11 @@ def _run(delta=0):
         print(f"Generating map ({index + 1} of {len(flights)})   \r", end="")
         sys.stdout.flush()
 
-        res = requests.get(
+        res = requests_wrapper.get(
             f"https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={flight}",
-            headers=headers,
         )
-        res.raise_for_status()
-        webhook.generateEmbed("✈️ FLight", res.json())
+
+        webhook.generateEmbed("✈️ FLight", requests_wrapper.toJson(res))
     webhook.delta = delta
     webhook.sendMessage()
     print()

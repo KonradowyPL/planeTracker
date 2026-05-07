@@ -8,12 +8,16 @@ A simple python code to track planes and notify you via discord webhooks
 
 ## Setting up
 
+Firstly clone repository and install dependencies:
 ```sh
 git clone https://github.com/KonradowyPL/planeTracker.git
 cd planeTracker
 pip install -r requirements.txt
 touch config.json
 ```
+Then install [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr#docker) 
+
+## Configuring:
 
 In `config.json` add following:
 
@@ -26,7 +30,8 @@ In `config.json` add following:
   "embedColor": "2CA3DA",
   "planes": ["HB-LUN", "HB-LUZ"],
   "font": "/path/to/font.ttf",
-  "userAgent": "PlaneTracker/0.0 (example@example.com)"
+  "userAgent": "PlaneTracker/0.0 (example@example.com)",
+  "flareSolver": "http://localhost:8191/v1"
 }
 ```
 
@@ -39,7 +44,8 @@ where:
 - `embedColor` is the hex color of the sidebar of the embed. In this case, light blue.
 - `planes` is an array of plane registration numbers that you want to track.
 - `font` is path to ttf font file. If not specifed defeault one will be used.
-- `userAgent` is User-Agent sent with requests. It is recommended to put here Your contact email.
+- `userAgent` is User-Agent sent with requests to OpenStreetMap. To prevent blocking it is recommended to put here Your contact email.
+- `flareSolver` is link to Your flareSolverr instance
 
 Note: Live mode, that periodically checks for new takeofs and landings has been discontinued. If you still want to acces it, it will be avaiable on `live-mode` branch.
 
