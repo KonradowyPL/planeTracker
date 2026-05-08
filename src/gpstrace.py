@@ -2,9 +2,9 @@ from staticmap import StaticMap, Line, IconMarker
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
 from collections import defaultdict
-from utils import config, colors, bounds
+from src.utils import config, colors, bounds
 
-icon = open("./icon.png", "rb")
+icon = open("./src/icon.png", "rb")
 
 
 class ramIcon(IconMarker):
@@ -50,10 +50,12 @@ class AttribStaticMap(StaticMap, object):
 
 def inBounds(coordinates: list[tuple[float, float, float]]):
     for pos in coordinates:
-        if pos[1] < bounds[0] and \
-                pos[1] > bounds[1] and \
-                pos[0] > bounds[2] and \
-                pos[0] < bounds[3]:
+        if (
+            pos[1] < bounds[0]
+            and pos[1] > bounds[1]
+            and pos[0] > bounds[2]
+            and pos[0] < bounds[3]
+        ):
             return True
     return False
 
@@ -62,8 +64,9 @@ def makeTrace(points):
     if len(points) < 1:
         return None
 
-    coordinates = [(point["lng"], point["lat"], point['alt'] * 0.3048)
-                   for point in points]
+    coordinates = [
+        (point["lng"], point["lat"], point["alt"] * 0.3048) for point in points
+    ]
 
     if bounds and not inBounds(coordinates):
         return None
@@ -85,16 +88,13 @@ def makeTrace(points):
             if index == 0:
                 current = point
                 continue
-            line = Line([current, point], lineColor(
-                point[2]), 2, simplify=False)
+            line = Line([current, point], lineColor(point[2]), 2, simplify=False)
             m.add_line(line)
             current = point
 
     newImg = Image.open(icon)
-    newImg = newImg.rotate(
-        90 - points[0]["hd"], expand=True, resample=Image.BICUBIC)
-    marker = ramIcon(coordinates[0], newImg,
-                     newImg.size[0] >> 1, newImg.size[1] >> 1)
+    newImg = newImg.rotate(90 - points[0]["hd"], expand=True, resample=Image.BICUBIC)
+    marker = ramIcon(coordinates[0], newImg, newImg.size[0] >> 1, newImg.size[1] >> 1)
     m.add_marker(marker)
 
     image = m.render()
@@ -131,8 +131,7 @@ def find_dense_squares(points, resolution):
     # Count points in each square
     for x, y in points:
         # Find the bottom-left corner of the square for each point
-        square = (int(x * resolution) / resolution,
-                  int(y * resolution) / resolution)
+        square = (int(x * resolution) / resolution, int(y * resolution) / resolution)
         square_count[square] += 1
     return square_count
 

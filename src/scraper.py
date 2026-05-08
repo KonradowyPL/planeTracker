@@ -1,4 +1,4 @@
-import requests_wrapper
+import src.requests_wrapper as requests_wrapper
 from datetime import datetime
 from bs4 import BeautifulSoup
 

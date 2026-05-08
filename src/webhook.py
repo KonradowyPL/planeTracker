@@ -1,8 +1,8 @@
 import requests
 import json
 from datetime import datetime, timezone
-from gpstrace import makeTrace
-from utils import config
+from src.gpstrace import makeTrace
+from src.utils import config
 
 delta = 0
 

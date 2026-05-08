@@ -1,6 +1,6 @@
 import requests
 import json
-from utils import config
+from src.utils import config
 url = config['flareSolver']
 headers = {"Content-Type": "application/json"}
 

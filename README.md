@@ -3,19 +3,22 @@
 # Plane Tracker
 
 A simple python code to track planes and notify you via discord webhooks
+
 > [!WARNING]
 > This should be used for your own educational purposes. If you are interested in accessing Flightradar24 data commercially, please contact business@fr24.com. See more information at [Flightradar24's terms and conditions](https://www.flightradar24.com/terms-and-conditions).
 
 ## Setting up
 
 Firstly clone repository and install dependencies:
+
 ```sh
 git clone https://github.com/KonradowyPL/planeTracker.git
 cd planeTracker
 pip install -r requirements.txt
 touch config.json
 ```
-Then install [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr#docker) 
+
+Then install [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr#docker)
 
 ## Configuring:
 
@@ -47,10 +50,10 @@ where:
 - `userAgent` is User-Agent sent with requests to OpenStreetMap. To prevent blocking it is recommended to put here Your contact email.
 - `flareSolver` is link to Your flareSolverr instance
 
-Note: Live mode, that periodically checks for new takeofs and landings has been discontinued. If you still want to acces it, it will be avaiable on `live-mode` branch.
-
 ## Contributing
+
 Feel free to open issues and make PRs.
 
 ## License
+
 This repository is under MIT license. See [license](./LICENSE) file.
