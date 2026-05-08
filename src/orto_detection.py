@@ -1,19 +1,7 @@
-from typing import List, Tuple
+from src.utils import angularDistance
 
 
-def angularDistance(a: int, b: int) -> int:
-    """
-    Circular angular distance on a 360° ring.
-    """
-    diff = abs(a - b)
-    return min(diff, 360 - diff)
-
-
-def findPeaks(data: List[float], thresholdRatio: float = 0.6) -> List[int]:
-    """
-    Find strong local maxima.
-    """
-
+def findPeaks(data: list[float], thresholdRatio: float = 0.6) -> list[int]:
     maxValue = max(data)
     threshold = maxValue * thresholdRatio
 
@@ -24,36 +12,17 @@ def findPeaks(data: List[float], thresholdRatio: float = 0.6) -> List[int]:
         currValue = data[i]
         nextValue = data[(i + 1) % 360]
 
-        if (
-            currValue >= threshold
-            and currValue >= prevValue
-            and currValue >= nextValue
-        ):
+        if currValue >= threshold and currValue >= prevValue and currValue >= nextValue:
             peaks.append(i)
 
     return peaks
 
 
 def hasOppositeSpikes(
-    data: List[float],
+    data: list[float],
     angleTolerance: int = 15,
     heightTolerance: float = 0.30,
-) -> Tuple[bool, dict]:
-    """
-    Detect two roughly equal spikes about 180° apart.
-
-    Parameters
-    ----------
-    angleTolerance:
-        allowed deviation from 180°
-
-    heightTolerance:
-        allowed relative height mismatch
-        0.30 => peaks may differ by 30%
-    """
-
-    if len(data) != 360:
-        raise ValueError("Dataset must contain exactly 360 elements")
+) -> tuple[bool, dict]:
 
     peaks = findPeaks(data)
 

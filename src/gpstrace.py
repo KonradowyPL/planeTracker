@@ -1,12 +1,16 @@
-from staticmap import StaticMap, Line, IconMarker
+import math
+import requests
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
-from collections import defaultdict
-from src.utils import config, colors, bounds
-import math
-from src.orto_detection import hasOppositeSpikes
+from staticmap import StaticMap, Line, IconMarker
+import os
 
-icon = open("./src/icon.png", "rb")
+from src.orto_detection import hasOppositeSpikes
+from src.utils import config, colors, bounds, interpolate, distance
+from src.requests_wrapper import urlToFilename
+
+arrival = Image.open(open("./src/arrival.png", "rb"))
+departure = Image.open(open("./src/departure.png", "rb"))
 
 
 class ramIcon(IconMarker):
@@ -18,22 +22,27 @@ class ramIcon(IconMarker):
 
 class AttribStaticMap(StaticMap, object):
     def __init__(self, *args, **kwargs):
-        self.attribution = "© OpenStreetMap-Contributors"
+        self.attribution = (
+            "© OpenStreetMap-Contributors"
+        )
         self.extent: tuple[float, float, float, float] | None = None
         super(AttribStaticMap, self).__init__(*args, **kwargs)
         self.headers = {"User-Agent": f"StaticMap-{config['userAgent']}"}
+        self.url_template = "https://osm.rrze.fau.de/osmhd/{z}/{x}/{y}.png"
+        self.tile_size = 512
 
     def _draw_features(self, image):
         super(AttribStaticMap, self)._draw_features(image)
         draw = ImageDraw.Draw(image)
         try:
-            font = ImageFont.truetype(config.get("font"))
+            font = ImageFont.truetype(config.get("font"), 20)
         except Exception:
             font = ImageFont.load_default()
         image_width, image_height = image.size
         _, _, text_width, text_height = draw.textbbox(
             (0, 0), self.attribution, font=font
         )
+
         padding = 2
         x = image_width - text_width - padding
         y = image_height - text_height - padding
@@ -49,8 +58,16 @@ class AttribStaticMap(StaticMap, object):
             return super().determine_extent(zoom)
         return max(self.extent, super().determine_extent(zoom))
 
-    def _draw_base_layer(self, image):
-        return
+    def get(self, url, **kwargs):
+        fileName = "./dump/" + urlToFilename(url)
+        if config.get("dump") == "ALL" and os.path.exists(fileName):
+            return 200, open(fileName, "rb").read()
+
+        res = requests.get(url, **kwargs)
+
+        if config.get("dump") == "ALL":
+            open(fileName, "wb").write(res.content)
+        return res.status_code, res.content
 
 
 def inBounds(coordinates: list[tuple[float, float, float]]):
@@ -79,10 +96,10 @@ def makeTrace(points) -> tuple[BytesIO | None, dict]:
 
     # config.get("orto") and
     orto, feedback = isOrto(coordinates)
-    if not orto:
-        return None, feedback
+    # if not orto:
+    #     return None, feedback
 
-    m = AttribStaticMap(1024, 512, 8, 8)
+    m = AttribStaticMap(2048, 1024, 8, 8)
 
     if color := config.get("color"):
         line = Line(coordinates, color, 2, simplify=False)
@@ -97,11 +114,14 @@ def makeTrace(points) -> tuple[BytesIO | None, dict]:
             m.add_line(line)
             current = point
 
-    newImg = Image.open(icon)
-    newImg = newImg.rotate(
-        90 - points[0]["heading"], expand=True, resample=Image.Resampling.BICUBIC
+    marker = ramIcon(
+        coordinates[0], departure, departure.size[0] >> 1, departure.size[1] + 5
     )
-    marker = ramIcon(coordinates[0], newImg, newImg.size[0] >> 1, newImg.size[1] >> 1)
+    m.add_marker(marker)
+
+    marker = ramIcon(
+        coordinates[-1], arrival, arrival.size[0] >> 1, arrival.size[1] + 5
+    )
     m.add_marker(marker)
 
     image = m.render()
@@ -116,30 +136,17 @@ def lineColor(height):
     return colors[closest_key]
 
 
-def find_dense_squares(points, resolution):
-    # Dictionary to count points in each 1x1 square
-    square_count = defaultdict(int)
-
-    # Count points in each square
-    for x, y in points:
-        # Find the bottom-left corner of the square for each point
-        square = (int(x * resolution) / resolution, int(y * resolution) / resolution)
-        square_count[square] += 1
-    return square_count
-
-
-def isOrto(coordinates):
-    resolution = 20
+def isOrto(coordinates) -> tuple[bool, dict]:
+    resolution = 20  # ~5.5km
     spaced = resamplePolyline(coordinates, 1 / resolution)
 
     headings = [0.0] * 360
-
     prev = spaced[0]
 
     for point in spaced[1:]:
         delta = (point[0] - prev[0], point[1] - prev[1])
 
-        angleRad = math.atan2(delta[1], delta[0])
+        angleRad = math.atan2(delta[0], delta[1])
         angleDeg = int(math.degrees(angleRad)) % 360
 
         for angle in range(angleDeg - 10, angleDeg + 10):
@@ -147,41 +154,12 @@ def isOrto(coordinates):
 
         prev = point
 
-    # print(headings)
     result, data = hasOppositeSpikes(headings)
     return True, data
 
 
-def distance(pointA, pointB):
-    dx = pointB[0] - pointA[0]
-    dy = pointB[1] - pointA[1]
-    return math.hypot(dx, dy)
-
-
-def interpolate(pointA, pointB, t):
-    return (
-        pointA[0] + (pointB[0] - pointA[0]) * t,
-        pointA[1] + (pointB[1] - pointA[1]) * t,
-        pointA[2] + (pointB[2] - pointA[2]) * t,
-    )
-
-
+# resamples points so they are `spacing` apart
 def resamplePolyline(points, spacing):
-    """
-    Resample a polyline so points are evenly spaced.
-
-    Args:
-        points: list of (x, y) tuples
-        spacing: desired distance between output points
-
-    Returns:
-        list of evenly spaced (x, y) tuples
-    """
-
-    if len(points) < 2:
-        return points[:]
-
-    # Compute cumulative arc lengths
     cumulativeLengths = [0.0]
 
     for i in range(1, len(points)):
@@ -193,7 +171,6 @@ def resamplePolyline(points, spacing):
     if totalLength == 0:
         return [points[0]]
 
-    # Generate target distances
     numSamples = max(1, int(round(totalLength / spacing)))
     targetDistances = [i * totalLength / numSamples for i in range(numSamples + 1)]
 

@@ -13,6 +13,6 @@ def getFlights(registration: str, day):
     for link in playback_links:
         timestamp = int(link.get("data-timestamp", ""))
         date = datetime.fromtimestamp(timestamp).date()
-        if date == day or True:
+        if date == day:
             flights.append(link.get("data-flight-hex"))
     return flights[::-1]

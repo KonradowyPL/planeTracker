@@ -55,14 +55,14 @@ def generateEmbed(event, flight):
             "  (<t:{}:t>)", get("time", "real", "arrival"), ""
         )
         addSkipped(
-            f"[{get('aircraft','identification', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {_from} to: {to} -- {feedback}"
+            f"[{get('aircraft','identification', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {_from} to: {to}"
         )
         return
 
     embeds.append(
         {
             "title": f"{event}: {get('aircraft','identification', 'registration') or '??' }",
-            "description": (get("status", "text") or "") + f" -- {feedback}",
+            "description": (get("status", "text") or "") + f"\n{feedback}",
             "fields": [
                 {
                     "name": "🛫 From",

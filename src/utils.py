@@ -1,4 +1,5 @@
 import json
+import math
 
 config = json.load(open("config.json", "r"))
 
@@ -51,3 +52,22 @@ colors = {
 bounds = None
 if config.get("bounds"):
     bounds = list(map(float, config["bounds"].split(",")))
+
+
+def distance(pointA, pointB):
+    dx = pointB[0] - pointA[0]
+    dy = pointB[1] - pointA[1]
+    return math.hypot(dx, dy)
+
+
+def interpolate(pointA, pointB, t):
+    return (
+        pointA[0] + (pointB[0] - pointA[0]) * t,
+        pointA[1] + (pointB[1] - pointA[1]) * t,
+        pointA[2] + (pointB[2] - pointA[2]) * t,
+    )
+
+
+def angularDistance(a: int, b: int) -> int:
+    diff = abs(a - b)
+    return min(diff, 360 - diff)
