@@ -17,7 +17,6 @@ def run():
 
 
 def _run(delta=0):
-    webhook.clear()
     date = datetime.now().date() + timedelta(days=delta)
     flights = []
     for index, registration in enumerate(config["planes"]):
@@ -32,7 +31,8 @@ def _run(delta=0):
         print(f": {len(current)}")
 
         if index + 1 != len(config["planes"]):
-            time.sleep(5)  # ratelimit
+            # time.sleep(5)  # ratelimit
+            time.sleep(0)  # ratelimit
     print(f"got {len(flights)} flights")
 
     for index, flight in enumerate(flights):
