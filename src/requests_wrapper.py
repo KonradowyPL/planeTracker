@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from src.utils import config, DUMP
+from src.utils import config
 
 url = config["flareSolver"]
 headers = {"Content-Type": "application/json"}
@@ -39,10 +39,11 @@ def urlToFilename(url: str) -> str:
 
 
 def shouldDump(url: str) -> bool:
+    DUMP = config.get('dump')
     if DUMP == "ALL":
         return True
     elif DUMP == "FLIGHT" and url.startswith(
-        "https://data-live.flightradar24.com/clickhandler"
+        "https://api.flightradar24.com/common/v1/flight-playback.json"
     ):
         return True
     return False

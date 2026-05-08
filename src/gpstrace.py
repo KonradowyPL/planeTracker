@@ -3,6 +3,8 @@ from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
 from collections import defaultdict
 from src.utils import config, colors, bounds
+import math
+from src.orto_detection import hasOppositeSpikes
 
 icon = open("./src/icon.png", "rb")
 
@@ -46,7 +48,7 @@ class AttribStaticMap(StaticMap, object):
         if self.extent is None:
             return super().determine_extent(zoom)
         return max(self.extent, super().determine_extent(zoom))
-    
+
     def _draw_base_layer(self, image):
         return
 
@@ -63,24 +65,24 @@ def inBounds(coordinates: list[tuple[float, float, float]]):
     return False
 
 
-def makeTrace(points):
+def makeTrace(points) -> tuple[BytesIO | None, dict]:
     if len(points) < 1:
-        return None
+        return None, {"msg": "no trace"}
 
     coordinates = [
-        (point["lng"], point["lat"], point["alt"] * 0.3048) for point in points
+        (point["longitude"], point["latitude"], point["altitude"]["meters"])
+        for point in points
     ]
 
     if bounds and not inBounds(coordinates):
-        return None
+        return None, {"msg": "out of bounds"}
+
+    # config.get("orto") and
+    orto, feedback = isOrto(coordinates)
+    if not orto:
+        return None, feedback
 
     m = AttribStaticMap(1024, 512, 8, 8)
-
-    if config.get("clipOrtophoto"):
-        minlng, maxlng, minlat, maxlat = get_bounding_box(coordinates)
-        if minlat < 100 and minlng < 100:
-            m.extent = (minlng, minlat, maxlng, maxlat)
-            m.padding = 100, 100
 
     if color := config.get("color"):
         line = Line(coordinates, color, 2, simplify=False)
@@ -96,7 +98,9 @@ def makeTrace(points):
             current = point
 
     newImg = Image.open(icon)
-    newImg = newImg.rotate(90 - points[0]["hd"], expand=True, resample=Image.Resampling.BICUBIC)
+    newImg = newImg.rotate(
+        90 - points[0]["heading"], expand=True, resample=Image.Resampling.BICUBIC
+    )
     marker = ramIcon(coordinates[0], newImg, newImg.size[0] >> 1, newImg.size[1] >> 1)
     m.add_marker(marker)
 
@@ -104,22 +108,7 @@ def makeTrace(points):
     buffer = BytesIO()
     image.save(buffer, format="WEBP")
     buffer.seek(0)
-    return buffer
-
-
-def convert(points, distance_apart: int | float = 1):
-    current = (99999, 99999)
-    new = []
-    for point in points:
-        newx, newy = (
-            int(point[0] / distance_apart) * distance_apart,
-            int(point[1] / distance_apart) * distance_apart,
-        )
-        if current != (newx, newy):
-            new.append((newx, newy))
-            current = (newx, newy)
-
-    return new
+    return buffer, feedback
 
 
 def lineColor(height):
@@ -139,27 +128,101 @@ def find_dense_squares(points, resolution):
     return square_count
 
 
-def get_bounding_box(coordinates):
-    resolution = 30
+def isOrto(coordinates):
+    resolution = 20
+    spaced = resamplePolyline(coordinates, 1 / resolution)
 
-    spaced = convert(coordinates, distance_apart=1 / resolution)
-    squares = find_dense_squares(spaced, resolution=resolution)
+    headings = [0.0] * 360
 
-    minlng = minlat = 360
-    maxlng = maxlat = -360
+    prev = spaced[0]
 
-    for square in squares:
-        this = squares[square]
-        if this >= 3:
-            # m.add_marker(IconMarker(square, "./icon.png", 22, 22))
-            minlng = min(minlng, square[0])
-            maxlng = max(maxlng, square[0])
-            minlat = min(minlat, square[1])
-            maxlat = max(maxlat, square[1])
+    for point in spaced[1:]:
+        delta = (point[0] - prev[0], point[1] - prev[1])
 
-    minlng += 1 / resolution
-    maxlng += 1 / resolution
-    minlat += 1 / resolution
-    maxlat += 1 / resolution
+        angleRad = math.atan2(delta[1], delta[0])
+        angleDeg = int(math.degrees(angleRad)) % 360
 
-    return minlng, maxlng, minlat, maxlat
+        for angle in range(angleDeg - 10, angleDeg + 10):
+            headings[angle % 360] += 1
+
+        prev = point
+
+    # print(headings)
+    result, data = hasOppositeSpikes(headings)
+    return True, data
+
+
+def distance(pointA, pointB):
+    dx = pointB[0] - pointA[0]
+    dy = pointB[1] - pointA[1]
+    return math.hypot(dx, dy)
+
+
+def interpolate(pointA, pointB, t):
+    return (
+        pointA[0] + (pointB[0] - pointA[0]) * t,
+        pointA[1] + (pointB[1] - pointA[1]) * t,
+        pointA[2] + (pointB[2] - pointA[2]) * t,
+    )
+
+
+def resamplePolyline(points, spacing):
+    """
+    Resample a polyline so points are evenly spaced.
+
+    Args:
+        points: list of (x, y) tuples
+        spacing: desired distance between output points
+
+    Returns:
+        list of evenly spaced (x, y) tuples
+    """
+
+    if len(points) < 2:
+        return points[:]
+
+    # Compute cumulative arc lengths
+    cumulativeLengths = [0.0]
+
+    for i in range(1, len(points)):
+        segLength = distance(points[i - 1], points[i])
+        cumulativeLengths.append(cumulativeLengths[-1] + segLength)
+
+    totalLength = cumulativeLengths[-1]
+
+    if totalLength == 0:
+        return [points[0]]
+
+    # Generate target distances
+    numSamples = max(1, int(round(totalLength / spacing)))
+    targetDistances = [i * totalLength / numSamples for i in range(numSamples + 1)]
+
+    result = []
+
+    segIndex = 0
+
+    for targetDist in targetDistances:
+        while (
+            segIndex < len(cumulativeLengths) - 2
+            and cumulativeLengths[segIndex + 1] < targetDist
+        ):
+            segIndex += 1
+
+        segStartDist = cumulativeLengths[segIndex]
+        segEndDist = cumulativeLengths[segIndex + 1]
+
+        if segEndDist == segStartDist:
+            result.append(points[segIndex])
+            continue
+
+        t = (targetDist - segStartDist) / (segEndDist - segStartDist)
+
+        newPoint = interpolate(
+            points[segIndex],
+            points[segIndex + 1],
+            t,
+        )
+
+        result.append(newPoint)
+
+    return result

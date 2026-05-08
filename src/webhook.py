@@ -40,7 +40,7 @@ def generateEmbed(event, flight):
         return dat
 
     imgId = get("identification", "id") or str(len(files))
-    trace = makeTrace(flight.get("trail", []))
+    trace, feedback = makeTrace(flight["track"])
     if trace:
         files[imgId] = (
             f"{imgId}.webp",
@@ -55,49 +55,15 @@ def generateEmbed(event, flight):
             "  (<t:{}:t>)", get("time", "real", "arrival"), ""
         )
         addSkipped(
-            f"[{get('aircraft', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {_from} to: {to}"
+            f"[{get('aircraft','identification', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {_from} to: {to} -- {feedback}"
         )
         return
 
     embeds.append(
         {
-            "title": f"{event}: {get('aircraft', 'registration') or '??' }",
-            "description": get("status", "text") or "",
+            "title": f"{event}: {get('aircraft','identification', 'registration') or '??' }",
+            "description": (get("status", "text") or "") + f" -- {feedback}",
             "fields": [
-                {
-                    "name": "🛩️ Model:",
-                    "value": get("aircraft", "model", "text") or "??",
-                    "inline": True,
-                },
-                {
-                    "name": "✈️ Operator",
-                    "value": get("airline", "name") or "??",
-                    "inline": True,
-                },
-                *(
-                    {
-                        "name": "ID:",
-                        "value": get("identification", "number", "default") or "??",
-                        "inline": True,
-                    }
-                    if get("identification", "number", "default")
-                    else {}
-                ),
-                {
-                    "name": "Callsign:",
-                    "value": get("identification", "callsign") or "??",
-                    "inline": True,
-                },
-                # {
-                #     "name": "📍 Position:",
-                #     "value": f"[{round(get('trail',0,'lat') or 0, 2) or '??'}, {round(get('trail',0,'lng') or 0, 2) or '??'}](https://osm.org/?mlat={get('trail',0,'lat') or 0}&mlon={get('trail',0,'lng') or 0})",
-                #     "inline": True,
-                # },
-                # {
-                #     "name": "Altitude:",
-                #     "value": f"{round((get('trail', 0, 'alt') or 0) * 0.3048)}m",
-                #     "inline": True,
-                # },
                 {
                     "name": "🛫 From",
                     "value": (get("airport", "origin", "name") or "N/A")
@@ -112,7 +78,7 @@ def generateEmbed(event, flight):
                 },
             ],
             "thumbnail": {
-                "url": get("aircraft", "images", "large", 0, "src")
+                "url": get("aircraftImages", "large", 0, "src")
                 or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
             },
             "url": f"https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}",
@@ -160,7 +126,6 @@ def sendMessage():
 
         response = requests.post(webhookUrl, data={"payload_json": payload_json})
         response.raise_for_status()
-        clear()
         return
 
     message += f"\n{len(embeds)} flight{'s' if len(embeds) > 1 else ''} today:"
