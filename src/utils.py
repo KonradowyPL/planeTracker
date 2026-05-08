@@ -2,6 +2,8 @@ import json
 
 config = json.load(open("config.json", "r"))
 
+DUMP = "ALL"
+
 
 headers = {
     "accept-language": "en-US,en;q=0.9",

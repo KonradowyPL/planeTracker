@@ -46,6 +46,9 @@ class AttribStaticMap(StaticMap, object):
         if self.extent is None:
             return super().determine_extent(zoom)
         return max(self.extent, super().determine_extent(zoom))
+    
+    def _draw_base_layer(self, image):
+        return
 
 
 def inBounds(coordinates: list[tuple[float, float, float]]):
@@ -93,7 +96,7 @@ def makeTrace(points):
             current = point
 
     newImg = Image.open(icon)
-    newImg = newImg.rotate(90 - points[0]["hd"], expand=True, resample=Image.BICUBIC)
+    newImg = newImg.rotate(90 - points[0]["hd"], expand=True, resample=Image.Resampling.BICUBIC)
     marker = ramIcon(coordinates[0], newImg, newImg.size[0] >> 1, newImg.size[1] >> 1)
     m.add_marker(marker)
 
