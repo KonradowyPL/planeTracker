@@ -22,8 +22,10 @@ def run(delta=0):
         print(f": {len(current)}")
 
         time.sleep(5)  # ratelimit
-        
+
     print(f"got {len(flights)} flights")
+
+    message = webhook.Message(delta)
 
     for index, flight in enumerate(flights):
 
@@ -36,10 +38,8 @@ def run(delta=0):
             f"https://api.flightradar24.com/common/v1/flight-playback.json?flightId={flight}",
         )
 
-        webhook.generateEmbed(
-            "✈️ FLight",
+        message.addEmbed(
             requests_wrapper.toJson(res)["result"]["response"]["data"]["flight"],
         )
-    webhook.delta = delta
-    webhook.sendMessage()
+    message.sendMessage()
     print()

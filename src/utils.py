@@ -3,15 +3,6 @@ import math
 
 config = json.load(open("config.json", "r"))
 
-DUMP = "ALL"
-
-
-headers = {
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "max-age=0",
-    "user-agent": "Flightradar24/10.0.0 (com.flightradar24.iphone; build:10.0.0.1; iOS 17.4.1) Alamofire/5.9.1",
-}
-
 # color values from
 # https://support.fr24.com/support/solutions/articles/3000115027-why-does-the-aircraft-s-trail-change-colour
 colors = {
