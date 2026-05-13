@@ -1,17 +1,15 @@
+from io import BytesIO
 import requests
 import json
 from datetime import datetime, timezone
 from src.gpstrace import makeTrace
 from src.utils import config
 
-webhookUrl = config["webhook"]
 
 # if replace returns formatted string
 # else returns empty string or param
 # builder("hello, {}", "world") -> "hello, world"
 # builder("hello, {}", None, empty="no helllo") -> "no hello"
-
-
 def builder(string: str, replace, empty=""):
     if replace:
         return string.format(replace)
@@ -19,6 +17,12 @@ def builder(string: str, replace, empty=""):
 
 
 b = builder
+webhookUrl = config["webhook"]
+baseRequest = {
+    "tts": False,
+    "username": config.get("name"),
+    "icon": config.get("icon"),
+}
 
 
 def getter(data):
@@ -43,9 +47,9 @@ def getter(data):
 class Message:
     delta = 0
     webhookUrl = config["webhook"]
-    embeds = []
-    skipped = []
-    files = []
+
+    skipped: list[str] = []
+    data: list[tuple[str, dict, BytesIO]] = []
 
     def __init__(self, delta):
         self.delta = delta
@@ -53,57 +57,63 @@ class Message:
     def addEmbed(self, flight):
         get = getter(flight)
         flightId = get("identification", "id")
+        assert type(flightId) == str
+
         trace, feedback = makeTrace(flight["track"])
 
         if trace is None:
             origin = (get("airport", "origin", "name") or "N/A") + b(
-                "  (<t:{}:t>)", get("time", "real", "departure"), ""
+                "  (<t:{}:t>)", get("track", 0, "timestamp"), ""
             )
             destination = (get("airport", "destination", "name") or "N/A") + b(
-                "  (<t:{}:t>)", get("time", "real", "arrival"), ""
+                "  (<t:{}:t>)", get("track", -1, "timestamp"), ""
             )
             self.skipped.append(
                 f"[{get('aircraft','identification', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {origin} to: {destination}"
             )
             return
 
-        self.files.append(trace)
-
-        self.embeds.append(
-            {
-                "title": f"✈️ FLight: {get('aircraft','identification', 'registration') or '??' }",
-                "description": (get("status", "text") or "") + f"\n{feedback}",
-                "fields": [
-                    {
-                        "name": "🛫 From",
-                        "value": (get("airport", "origin", "name") or "N/A")
-                        + b("  (<t:{}:t>)", get("time", "real", "departure"), ""),
-                        "inline": False,
-                    },
-                    {
-                        "name": "🛬 To",
-                        "value": (get("airport", "destination", "name") or "N/A")
-                        + b("  (<t:{}:t>)", get("time", "real", "arrival"), ""),
-                        "inline": False,
-                    },
-                ],
-                "thumbnail": {
-                    "url": get("aircraftImages", "large", 0, "src")
-                    or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
+        embed = {
+            "title": f"✈️ FLight: {get('aircraft','identification', 'registration') or '??' }",
+            "description": (get("status", "text") or "") + f"\n{feedback}",
+            "fields": [
+                {
+                    "name": "🛫 From",
+                    "value": (get("airport", "origin", "name") or "N/A")
+                    + b("  (<t:{}:t>)", get("track", 0, "timestamp"), ""),
+                    "inline": False,
                 },
-                "url": f"https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}",
-                "color": int(config["embedColor"], base=16),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
-                + "Z",
-                "image": {"url": f"attachment://{flightId}.webp"},
-            }
+                {
+                    "name": "🛬 To",
+                    "value": (get("airport", "destination", "name") or "N/A")
+                    + b("  (<t:{}:t>)", get("track", -1, "timestamp"), ""),
+                    "inline": False,
+                },
+            ],
+            "thumbnail": {
+                "url": get("aircraftImages", "large", 0, "src")
+                or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
+            },
+            "url": f"https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}",
+            "color": int(config["embedColor"], base=16),
+            "timestamp": datetime.fromtimestamp(
+                get("track", -1, "timestamp") or 0, timezone.utc
+            ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "image": {"url": f"attachment://{flightId}.webp"},
+        }
+        self.data.append(
+            (
+                flightId,
+                embed,
+                trace,
+            )
         )
 
     def sendMessage(self):
         # empty
-        if len(self.embeds) + len(self.skipped) == 0:
+        if len(self.data) + len(self.skipped) == 0:
             response = requests.post(
-                webhookUrl, data={"content": "No flights today :("}
+                webhookUrl, data={"content": "No flights today :(", **baseRequest}
             )
             response.raise_for_status()
 
@@ -118,11 +128,25 @@ class Message:
             content += "\n".join(self.skipped)
 
         content += (
-            f"\n{len(self.embeds)} flight{'s' if len(self.embeds) > 1 else ''} today:"
+            f"\n{len(self.data)} flight{'s' if len(self.data) > 1 else ''} today:"
         )
 
-        for page in range(0, len(self.embeds), 10):
+        for page in range(0, len(self.data), 10):
             self.sendPage(page, content if page == 0 else "")
 
     def sendPage(self, page: int, content: str):
-        print("sending page", page, "with content", content)
+        data = self.data[page : page + 10]
+        embeds = [embed for _, embed, _ in data]
+
+        files = {
+            flightId: (f"{flightId}.webp", buffer, "image/webp")
+            for flightId, _, buffer in data
+        }
+
+        payload = {"content": content, "embeds": embeds}
+        response = requests.post(
+            webhookUrl,
+            files=files,
+            data={"payload_json": json.dumps(payload), **baseRequest},
+        )
+        response.raise_for_status()

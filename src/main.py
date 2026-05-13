@@ -21,8 +21,6 @@ def run(delta=0):
         flights.extend(current)
         print(f": {len(current)}")
 
-        time.sleep(5)  # ratelimit
-
     print(f"got {len(flights)} flights")
 
     message = webhook.Message(delta)
