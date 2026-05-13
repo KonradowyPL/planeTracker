@@ -1,9 +1,10 @@
-from io import BytesIO
-import requests
 import json
+import requests
+from io import BytesIO
 from datetime import datetime, timezone
-from src.gpstrace import makeTrace
+
 from src.utils import config
+from src.gpstrace import makeTrace
 
 
 # if replace returns formatted string
@@ -60,16 +61,18 @@ class Message:
         assert type(flightId) == str
 
         trace, feedback = makeTrace(flight["track"])
-
+        departure = get("track", 0, "timestamp")
+        arrival = get("track", -1, "timestamp")
+        link = f"https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}"
         if trace is None:
             origin = (get("airport", "origin", "name") or "N/A") + b(
-                "  (<t:{}:t>)", get("track", 0, "timestamp"), ""
+                "  (<t:{}:t>)", departure, ""
             )
             destination = (get("airport", "destination", "name") or "N/A") + b(
-                "  (<t:{}:t>)", get("track", -1, "timestamp"), ""
+                "  (<t:{}:t>)", arrival, ""
             )
             self.skipped.append(
-                f"[{get('aircraft','identification', 'registration') or '??' }](https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}) from: {origin} to: {destination}"
+                f"[{get('aircraft','identification', 'registration') or '??' }]({link}) from: {origin} to: {destination}"
             )
             return
 
@@ -80,13 +83,13 @@ class Message:
                 {
                     "name": "🛫 From",
                     "value": (get("airport", "origin", "name") or "N/A")
-                    + b("  (<t:{}:t>)", get("track", 0, "timestamp"), ""),
+                    + b("  (<t:{}:t>)", departure, ""),
                     "inline": False,
                 },
                 {
                     "name": "🛬 To",
                     "value": (get("airport", "destination", "name") or "N/A")
-                    + b("  (<t:{}:t>)", get("track", -1, "timestamp"), ""),
+                    + b("  (<t:{}:t>)", arrival, ""),
                     "inline": False,
                 },
             ],
@@ -94,11 +97,11 @@ class Message:
                 "url": get("aircraftImages", "large", 0, "src")
                 or "https://www.jetphotos.com/assets/img/placeholders/large.jpg"
             },
-            "url": f"https://www.flightradar24.com/data/aircraft/{get('identification','callsign')}#{get('identification','id')}",
+            "url": link,
             "color": int(config["embedColor"], base=16),
-            "timestamp": datetime.fromtimestamp(
-                get("track", -1, "timestamp") or 0, timezone.utc
-            ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "timestamp": datetime.fromtimestamp(arrival or 0, timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
             "image": {"url": f"attachment://{flightId}.webp"},
         }
         self.data.append(
