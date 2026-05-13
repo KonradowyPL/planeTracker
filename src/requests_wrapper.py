@@ -42,8 +42,12 @@ def shouldDump(url: str) -> bool:
     DUMP = config.get('dump')
     if DUMP == "ALL":
         return True
-    elif DUMP == "FLIGHT" and url.startswith(
+    elif  "FLIGHT" in DUMP and url.startswith(
         "https://api.flightradar24.com/common/v1/flight-playback.json"
+    ):
+        return True
+    elif  "TILE" in DUMP and url.startswith(
+        "https://osm.rrze.fau.de/osmhd"
     ):
         return True
     return False

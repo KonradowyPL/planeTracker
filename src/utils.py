@@ -71,3 +71,10 @@ def interpolate(pointA, pointB, t):
 def angularDistance(a: int, b: int) -> int:
     diff = abs(a - b)
     return min(diff, 360 - diff)
+
+
+def lineColor(height):
+    if color := config.get("color"):
+        return color
+    closest_key = min(colors.keys(), key=lambda k: abs(k - height))
+    return colors[closest_key]

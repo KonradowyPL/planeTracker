@@ -6,8 +6,8 @@ from staticmap import StaticMap, Line, IconMarker
 import os
 
 from src.orto_detection import hasOppositeSpikes
-from src.utils import config, colors, bounds, interpolate, distance
-from src.requests_wrapper import urlToFilename
+from src.utils import config, colors, bounds, interpolate, distance, lineColor
+from src.requests_wrapper import shouldDump, urlToFilename
 
 arrival = Image.open(open("./src/arrival.png", "rb"))
 departure = Image.open(open("./src/departure.png", "rb"))
@@ -22,9 +22,7 @@ class ramIcon(IconMarker):
 
 class AttribStaticMap(StaticMap, object):
     def __init__(self, *args, **kwargs):
-        self.attribution = (
-            "© OpenStreetMap-Contributors"
-        )
+        self.attribution = "© OpenStreetMap-Contributors"
         self.extent: tuple[float, float, float, float] | None = None
         super(AttribStaticMap, self).__init__(*args, **kwargs)
         self.headers = {"User-Agent": f"StaticMap-{config['userAgent']}"}
@@ -60,12 +58,13 @@ class AttribStaticMap(StaticMap, object):
 
     def get(self, url, **kwargs):
         fileName = "./dump/" + urlToFilename(url)
-        if config.get("dump") == "ALL" and os.path.exists(fileName):
+        dump = shouldDump(url)
+        if dump and os.path.exists(fileName):
             return 200, open(fileName, "rb").read()
 
         res = requests.get(url, **kwargs)
 
-        if config.get("dump") == "ALL":
+        if dump:
             open(fileName, "wb").write(res.content)
         return res.status_code, res.content
 
@@ -101,39 +100,30 @@ def makeTrace(points) -> tuple[BytesIO | None, dict]:
 
     m = AttribStaticMap(2048, 1024, 8, 8)
 
-    if color := config.get("color"):
-        line = Line(coordinates, color, 2, simplify=False)
+    # draw path
+    previous = coordinates[0]
+    for point in coordinates[1:]:
+        line = Line([previous, point], lineColor(point[2]), 2, simplify=False)
         m.add_line(line)
-    else:
-        current = ()
-        for index, point in enumerate(coordinates):
-            if index == 0:
-                current = point
-                continue
-            line = Line([current, point], lineColor(point[2]), 2, simplify=False)
-            m.add_line(line)
-            current = point
+        previous = point
 
-    marker = ramIcon(
-        coordinates[0], departure, departure.size[0] >> 1, departure.size[1] + 5
+    # draw departure icon
+    m.add_marker(
+        ramIcon(
+            coordinates[0], departure, departure.size[0] >> 1, departure.size[1] + 5
+        )
     )
-    m.add_marker(marker)
 
-    marker = ramIcon(
-        coordinates[-1], arrival, arrival.size[0] >> 1, arrival.size[1] + 5
+    # draw arrival icon
+    m.add_marker(
+        ramIcon(coordinates[-1], arrival, arrival.size[0] >> 1, arrival.size[1] + 5)
     )
-    m.add_marker(marker)
 
     image = m.render()
     buffer = BytesIO()
     image.save(buffer, format="WEBP")
     buffer.seek(0)
     return buffer, feedback
-
-
-def lineColor(height):
-    closest_key = min(colors.keys(), key=lambda k: abs(k - height))
-    return colors[closest_key]
 
 
 def isOrto(coordinates) -> tuple[bool, dict]:

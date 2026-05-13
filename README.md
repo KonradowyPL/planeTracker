@@ -15,10 +15,11 @@ Firstly clone repository and install dependencies:
 git clone https://github.com/KonradowyPL/planeTracker.git
 cd planeTracker
 pip install -r requirements.txt
+mkdir dump
 touch config.json
 ```
 
-Then install [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr#docker)
+Then install [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr#installation)
 
 ## Configuring:
 
@@ -34,7 +35,8 @@ In `config.json` add following:
   "planes": ["HB-LUN", "HB-LUZ"],
   "font": "/path/to/font.ttf",
   "userAgent": "PlaneTracker/0.0 (example@example.com)",
-  "flareSolver": "http://localhost:8191/v1"
+  "flareSolver": "http://localhost:8191/v1",
+  "dump": "FLIGHT,TILE"
 }
 ```
 
@@ -48,7 +50,15 @@ where:
 - `planes` is an array of plane registration numbers that you want to track.
 - `font` is path to ttf font file. If not specifed defeault one will be used.
 - `userAgent` is User-Agent sent with requests to OpenStreetMap. To prevent blocking it is recommended to put here Your contact email.
-- `flareSolver` is link to Your flareSolverr instance
+- `flareSolver` is link to Your [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr#installation) instance
+- `dump` optional: specifies what requests do dump and cache for future use: `FLIGHT` will cache all flights, `TILE` will cache map tiles and `ALL` which isn't recommended and should be used only when debugging
+
+## Running
+
+I recommend launching it via cron every day:
+```
+0 23 * * * bash -c 'cd /path/to/planeTracker && python /path/to/planeTracker/main.py' 2>&1 >> /path/to/errors.log
+```
 
 ## Contributing
 
