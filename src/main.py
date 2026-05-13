@@ -21,8 +21,8 @@ def run(delta=0):
         flights.extend(current)
         print(f": {len(current)}")
 
-        if index + 1 != len(config["planes"]):
-            time.sleep(5)  # ratelimit
+        time.sleep(5)  # ratelimit
+        
     print(f"got {len(flights)} flights")
 
     for index, flight in enumerate(flights):
