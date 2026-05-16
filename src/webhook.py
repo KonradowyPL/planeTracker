@@ -130,6 +130,10 @@ class Message:
             content += f"{len(self.skipped)} skipped flights:\n"
             content += "\n".join(self.skipped)
 
+        if len(self.data) == 0 and len(self.skipped) > 0:
+            self.sendPage(0, content)
+            return
+        
         content += (
             f"\n{len(self.data)} flight{'s' if len(self.data) > 1 else ''} today:"
         )
