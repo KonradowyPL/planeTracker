@@ -23,6 +23,9 @@ baseRequest = {
     "tts": False,
     "username": config.get("name"),
     "icon": config.get("icon"),
+    "allowed_mentions": {
+        "parse": []
+    }
 }
 
 
