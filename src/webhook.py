@@ -23,9 +23,7 @@ baseRequest = {
     "tts": False,
     "username": config.get("name"),
     "icon": config.get("icon"),
-    "allowed_mentions": {
-        "parse": []
-    }
+    "allowed_mentions": {"parse": []},
 }
 
 
@@ -119,7 +117,12 @@ class Message:
         # empty
         if len(self.data) + len(self.skipped) == 0:
             response = requests.post(
-                webhookUrl, data={"content": "No flights today :(", **baseRequest}
+                webhookUrl,
+                data={
+                    "payload_json": json.dumps(
+                        {"content": "No flights today :(", **baseRequest}
+                    )
+                },
             )
             response.raise_for_status()
 
@@ -136,7 +139,7 @@ class Message:
         if len(self.data) == 0 and len(self.skipped) > 0:
             self.sendPage(0, content)
             return
-        
+
         content += (
             f"\n{len(self.data)} flight{'s' if len(self.data) > 1 else ''} today:"
         )
@@ -153,10 +156,12 @@ class Message:
             for flightId, _, buffer in data
         }
 
-        payload = {"content": content, "embeds": embeds}
+        payload = {"content": content, "embeds": embeds, **baseRequest}
         response = requests.post(
             webhookUrl,
             files=files,
-            data={"payload_json": json.dumps(payload), **baseRequest},
+            data={"payload_json": json.dumps(payload)},
         )
+        if response.status_code != 200:
+            print(response.text)
         response.raise_for_status()
