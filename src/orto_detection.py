@@ -26,7 +26,7 @@ def hasOppositeSpikes(
 
     peaks = findPeaks(data)
 
-    if len(peaks) < 2:
+    if len(peaks) < 10:
         return False, {"reason": "not enough peaks"}
 
     bestMatch = None
@@ -47,6 +47,8 @@ def hasOppositeSpikes(
             h1 = data[p1]
             h2 = data[p2]
 
+            if max(h1, h2) == 0:
+               return False, {}
             heightRatio = min(h1, h2) / max(h1, h2)
 
             if heightRatio < (1.0 - heightTolerance):
